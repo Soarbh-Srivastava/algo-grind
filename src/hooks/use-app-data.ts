@@ -1,9 +1,10 @@
+
 // src/hooks/use-app-data.ts
 import { useState, useEffect, useCallback } from 'react';
 import type { AppData, SolvedProblem, GoalSettings, Goal } from '@/types';
 import { GOAL_CATEGORIES } from '@/lib/constants';
 import { db } from '@/lib/firebase'; // Firebase integration
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 
 const FIRESTORE_COLLECTION_ID = 'appData'; // Collection to store app data
 const FIRESTORE_DOCUMENT_ID = 'defaultUserData'; // Document ID for the single user data
@@ -78,8 +79,27 @@ export function useAppData() {
           await setDoc(dataDocRef, defaultData);
           setAppData(defaultData);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to load or initialize data from Firestore:", error);
+        if (error.code === 'permission-denied' || 
+            (error.message && error.message.toLowerCase().includes("permission denied")) || 
+            (error.message && error.message.toLowerCase().includes("insufficient permissions")) ||
+            (error.message && error.message.toLowerCase().includes("missing or insufficient permissions"))) {
+          console.error(
+            "Firestore permission denied. This usually means your Firestore security rules are blocking access. " +
+            "Please check your Firestore security rules in the Firebase console. " +
+            `Ensure they allow read/write access to the '${FIRESTORE_COLLECTION_ID}/${FIRESTORE_DOCUMENT_ID}' document for unauthenticated users.` +
+            " Example rules:\n" +
+            "rules_version = '2';\n" +
+            "service cloud.firestore {\n" +
+            "  match /databases/{database}/documents {\n" +
+            `    match /${FIRESTORE_COLLECTION_ID}/${FIRESTORE_DOCUMENT_ID} {\n` +
+            "      allow read, write: if true;\n" +
+            "    }\n" +
+            "  }\n" +
+            "}"
+          );
+        }
         setAppData(getDefaultAppData()); // Fallback to default in-memory data on error
       } finally {
         setIsInitialized(true);
@@ -87,7 +107,8 @@ export function useAppData() {
       }
     }
     loadData();
-  }, [dataDocRef]); // dataDocRef is stable
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // dataDocRef is stable if db is stable, which it should be.
 
   const addSolvedProblem = useCallback(async (problem: Omit<SolvedProblem, 'id'>) => {
     const newProblem: SolvedProblem = { ...problem, id: crypto.randomUUID(), isForReview: problem.isForReview ?? false };
@@ -145,39 +166,17 @@ export function useAppData() {
     }
   }, [dataDocRef]);
 
-  const updateGoalSettings = useCallback(async (newGoalSettings: GoalSettings) => {
-    const fullNewSettings = {
-      period: newGoalSettings.period,
-      goals: newGoalSettings.goals.map(goal => ({
-        categoryId: goal.categoryId,
-        target: goal.target
-      }))
-    };
+  const updateGoalSettings = useCallback(async (settings: GoalSettings) => {
     try {
-      await updateDoc(dataDocRef, { goalSettings: fullNewSettings });
+      await updateDoc(dataDocRef, {
+        goalSettings: settings
+      });
       setAppData(prev => ({
         ...prev,
-        goalSettings: fullNewSettings,
+        goalSettings: settings,
       }));
     } catch (error) {
       console.error("Failed to update goal settings in Firestore:", error);
-    }
-  }, [dataDocRef]);
-  
-  const updateSingleGoal = useCallback(async (updatedGoal: Goal) => {
-    try {
-      const currentDoc = await getDoc(dataDocRef);
-      if (currentDoc.exists()) {
-        const currentData = currentDoc.data() as AppData;
-        const newGoals = currentData.goalSettings.goals.map(g => 
-          g.categoryId === updatedGoal.categoryId ? updatedGoal : g
-        );
-        const newGoalSettings = { ...currentData.goalSettings, goals: newGoals };
-        await updateDoc(dataDocRef, { goalSettings: newGoalSettings });
-        setAppData(prev => ({ ...prev, goalSettings: newGoalSettings }));
-      }
-    } catch (error) {
-      console.error("Failed to update single goal in Firestore:", error);
     }
   }, [dataDocRef]);
 
@@ -186,7 +185,7 @@ export function useAppData() {
       const currentDoc = await getDoc(dataDocRef);
       if (currentDoc.exists()) {
         const currentData = currentDoc.data() as AppData;
-        const updatedProblems = currentData.solvedProblems.map(p => 
+        const updatedProblems = currentData.solvedProblems.map(p =>
           p.id === problemId ? { ...p, isForReview: !(p.isForReview ?? false) } : p
         );
         await updateDoc(dataDocRef, { solvedProblems: updatedProblems });
@@ -200,18 +199,14 @@ export function useAppData() {
     }
   }, [dataDocRef]);
 
-
   return {
     appData,
     isInitialized,
-    isLoading: isLoadingStorage || !isInitialized, 
+    isLoading: isLoadingStorage, // Renamed for clarity from isLoadingStorage
     addSolvedProblem,
     updateSolvedProblem,
     removeSolvedProblem,
     updateGoalSettings,
-    updateSingleGoal,
     toggleProblemReviewStatus,
-    solvedProblems: appData.solvedProblems,
-    goalSettings: appData.goalSettings,
   };
 }
