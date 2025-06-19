@@ -40,7 +40,7 @@ const mapToAIProblemType = (type: AppProblemType): FlowProblemType | undefined =
   if (validTypes.includes(type as FlowProblemType)) {
     return type as FlowProblemType;
   }
-  return undefined; 
+  return undefined;
 };
 
 
@@ -52,7 +52,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
   const [chatInput, setChatInput] = React.useState('');
   const [chatHistory, setChatHistory] = React.useState<ChatMessage[]>([]);
   const [isChatting, setIsChatting] = React.useState(false);
-  
+
   const lastMessageRef = React.useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = React.useState(false);
   const [isAtBottom, setIsAtBottom] = React.useState(true);
@@ -65,11 +65,11 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     const aiSolvedProblems = solvedProblems
       .map(p => {
         const aiType = mapToAIProblemType(p.type);
-        if (!aiType) return null; 
+        if (!aiType) return null;
         return {
           problemType: aiType,
           difficulty: p.difficulty,
-          url: p.url, 
+          url: p.url,
         };
       })
       .filter(p => p !== null) as PersonalizedRecommendationsInput['solvedProblems'];
@@ -84,7 +84,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
       setIsLoadingRecommendations(false);
       return;
     }
-    
+
     const input: PersonalizedRecommendationsInput = {
       solvedProblems: aiSolvedProblems,
       striverSheetUrl: STRIVER_SHEET_URL,
@@ -122,15 +122,17 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     if (!chatInput.trim()) return;
     setIsChatting(true);
     const newMessage: ChatMessage = { role: 'user', content: chatInput.trim() };
-    
+
     setChatHistory(prev => [...prev, newMessage]);
-    setChatInput(''); 
+    setChatInput('');
+    setIsAtBottom(true); 
 
     try {
-      const currentHistoryForFlow = [...chatHistory, newMessage]; 
-      const flowHistory = currentHistoryForFlow.slice(0, -1);
-      const input: ChatInput = { message: newMessage.content, history: flowHistory }; 
-      
+      const currentHistoryForFlow = [...chatHistory, newMessage];
+      // Pass all but the last message (which is the current one) as history to the flow
+      const flowHistory = currentHistoryForFlow.slice(0, -1); 
+      const input: ChatInput = { message: newMessage.content, history: flowHistory };
+
       const result: ChatOutput = await chatWithMentor(input);
       const aiResponse: ChatMessage = { role: 'model', content: result.response };
       setChatHistory(prev => [...prev, aiResponse]);
@@ -147,18 +149,19 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
       setIsChatting(false);
     }
   };
-  
+
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    const atBottomThreshold = 10; 
+    const atBottomThreshold = 10; // Pixels from bottom to be considered "at bottom"
     const currentlyAtBottom = scrollHeight - scrollTop - clientHeight < atBottomThreshold;
-    
+
     setIsAtBottom(currentlyAtBottom);
     setShowScrollButton(!currentlyAtBottom && scrollHeight > clientHeight + atBottomThreshold);
   };
 
   const scrollToBottom = () => {
     if(lastMessageRef.current) {
+      // Use requestAnimationFrame for smoother scroll after DOM updates
       requestAnimationFrame(() => {
         lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       });
@@ -171,20 +174,29 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     const lastMessage = chatHistory.length > 0 ? chatHistory[chatHistory.length - 1] : null;
 
     if (lastMessageRef.current) {
-      if (lastMessage && lastMessage.role === 'user') {
-        requestAnimationFrame(() => {
-          lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-          setIsAtBottom(true);
-          setShowScrollButton(false);
-        });
-      } else if (lastMessage && lastMessage.role === 'model' && isAtBottom) {
+      // Always scroll if the user sent the last message, or if the model sent it and user is already at bottom
+      if ((lastMessage && lastMessage.role === 'user') || (lastMessage && lastMessage.role === 'model' && isAtBottom)) {
         requestAnimationFrame(() => {
           lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
         });
       }
     }
+     // Update scroll button visibility based on new history and scroll position
+     if (lastMessageRef.current) {
+      // It's possible lastMessageRef.current.parentElement is null if component unmounts quickly
+      const scrollContainer = lastMessageRef.current.parentElement?.parentElement; // Refers to the ScrollArea's viewport or content div
+      if (scrollContainer) {
+        const { scrollHeight, clientHeight, scrollTop } = scrollContainer;
+        const currentlyAtBottom = scrollHeight - scrollTop - clientHeight < 10;
+        setShowScrollButton(!currentlyAtBottom && scrollHeight > clientHeight + 10);
+      } else {
+        setShowScrollButton(false); // Default to not showing if container not found
+      }
+    }
+
   }, [chatHistory, isAtBottom]);
 
+  // Reset states if chat history becomes empty
   React.useEffect(() => {
     if (chatHistory.length === 0) {
       setIsAtBottom(true);
@@ -194,7 +206,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
 
 
   return (
-    <Card className="shadow-lg flex flex-col h-full max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-150px)] overflow-y-auto">
+    <Card className="shadow-lg flex flex-col max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-150px)] overflow-y-auto">
       <CardHeader>
         <CardTitle className="font-headline text-2xl text-primary flex items-center">
           <Icons.AIMentor className="mr-2 h-7 w-7" /> AI Mentor
@@ -203,7 +215,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
           Get personalized problem recommendations and chat with your AI DSA mentor.
         </CardDescription>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         {solvedProblems.length === 0 && !isLoadingRecommendations && (
            <Alert variant="default" className="bg-accent/20 border-accent/50">
@@ -266,15 +278,15 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
           </div>
         )}
       </CardContent>
-      
+
       <Separator className="my-2 md:my-4" />
 
       <CardContent className="flex-1 flex flex-col space-y-2 md:space-y-4 overflow-hidden pt-0">
         <h3 className="font-headline text-xl text-foreground flex items-center">
           <BotIcon className="mr-2 h-6 w-6" /> Chat with Mentor
         </h3>
-        <ScrollArea 
-          className="border rounded-md p-2 md:p-4 bg-muted/20 min-h-[200px] max-h-[400px]"
+        <ScrollArea
+          className="flex-1 border rounded-md p-2 md:p-4 bg-muted/20 min-h-[200px] max-h-[400px]"
           onScrollCapture={handleScroll}
         >
           <div className="space-y-3 md:space-y-4">
@@ -301,9 +313,9 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                   )}
                 >
                   <ReactMarkdown
-                    className="prose prose-sm dark:prose-invert max-w-none prose-p:last:mb-0 prose-code:before:content-none prose-code:after:content-none prose-pre:p-0 prose-pre:bg-transparent"
+                    className="prose prose-sm dark:prose-invert max-w-none prose-p:last:mb-0 prose-code:before:content-none prose-code:after:content-none prose-pre:bg-transparent"
                     components={{
-                      pre: ({ node, children, className: preClassName, ...props }) => {
+                       pre: ({ node, children, className: preClassName, ...props }) => {
                         const codeChild = Array.isArray(children) && children[0] && typeof children[0] === 'object' && 'props' in children[0] ? children[0] as React.ReactElement : null;
                         let lang = '';
                         if (codeChild && codeChild.props && typeof codeChild.props.className === 'string') {
@@ -329,13 +341,12 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                           return (
                             <code
                               className={cn("bg-foreground/10 text-foreground px-1 py-0.5 rounded text-[0.9em] font-mono", className)}
+                              {...props} // Pass props for inline code
                             >
                               {children}
                             </code>
                           );
                         }
-                        // For block code, react-markdown wraps it in <pre> then <code>.
-                        // Our <pre> renderer handles the container. This <code> just passes through.
                         return (
                           <code className={cn("font-mono", className)} {...props}>
                             {children}
@@ -355,9 +366,9 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
               </div>
             ))}
              {isChatting && chatHistory[chatHistory.length -1]?.role === 'user' && (
-                <div 
+                <div
                   className="flex items-start space-x-2 md:space-x-3 justify-start pr-6 md:pr-10"
-                  ref={lastMessageRef} 
+                  ref={lastMessageRef} // Also apply ref here so loading indicator scrolls into view
                 >
                     <Avatar className="h-7 w-7 md:h-8 md:w-8 shrink-0">
                         <AvatarFallback><BotIcon size={16} className="md:h-5 md:w-5"/></AvatarFallback>
@@ -372,20 +383,20 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                 Ask the AI Mentor anything about DSA!
               </div>
             )}
+             {showScrollButton && (
+              <div className="sticky bottom-0 flex justify-center pb-1 z-10">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={scrollToBottom}
+                  className="shadow-lg rounded-full px-4 py-2 h-auto"
+                >
+                  <ChevronDown className="h-4 w-4 mr-1" />
+                  New messages
+                </Button>
+              </div>
+            )}
           </div>
-           {showScrollButton && (
-            <div className="sticky bottom-0 flex justify-center pb-1 z-10"> 
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={scrollToBottom}
-                className="shadow-lg rounded-full px-4 py-2 h-auto"
-              >
-                <ChevronDown className="h-4 w-4 mr-1" />
-                New messages
-              </Button>
-            </div>
-          )}
         </ScrollArea>
         <div className="flex items-center space-x-2 pt-1 md:pt-2">
           <Textarea
