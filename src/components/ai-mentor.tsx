@@ -22,7 +22,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { z } from 'zod';
 import ReactMarkdown from 'react-markdown';
@@ -61,7 +60,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
 
   const handleGetRecommendations = async () => {
     setIsLoadingRecommendations(true);
-    // setRecommendations([]); // Keep previous recommendations visible while loading new ones
+    // setRecommendations([]); // Keep previous visible
 
     const aiSolvedProblems = solvedProblems
       .map(p => {
@@ -90,7 +89,6 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         setRecommendations([]); 
      }
 
-
     const input: PersonalizedRecommendationsInput = {
       solvedProblems: aiSolvedProblems,
       striverSheetUrl: STRIVER_SHEET_URL,
@@ -118,7 +116,9 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         title: "AI Mentor Error",
         description: "Could not fetch recommendations. Please try again later.",
       });
-      setRecommendations([]);
+      if (recommendations.length > 0) { // Only clear if there were previous recommendations
+        setRecommendations([]);
+      }
     } finally {
       setIsLoadingRecommendations(false);
     }
@@ -169,7 +169,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         });
       }, 100);
     }
-  }, [chatHistory.length, isAtBottom]); // Keep isAtBottom dependency
+  }, [chatHistory.length, isAtBottom]);
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
@@ -194,241 +194,250 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
     }
   }, [chatHistory.length]);
 
-
   return (
-     <Card className="shadow-lg flex flex-col max-h-[calc(100vh-170px)] sm:max-h-[calc(100vh-150px)] md:max-h-[calc(100vh-100px)] overflow-hidden">
-      <CardHeader className="flex-shrink-0">
-        <CardTitle className="font-headline text-2xl text-primary flex items-center">
-          <Icons.AIMentor className="mr-2 h-7 w-7" /> AI Mentor
-        </CardTitle>
-        <CardDescription>
+     <div className="flex flex-col space-y-6 max-h-[calc(100vh-170px)] sm:max-h-[calc(100vh-150px)] md:max-h-[calc(100vh-100px)] overflow-hidden">
+      
+      {/* General AI Mentor Title Section */}
+      <div className="flex-shrink-0 px-1"> {/* Added px-1 for slight indent matching card content */}
+        <div className="flex items-center space-x-2">
+          <Icons.AIMentor className="h-7 w-7 text-primary" />
+          <h2 className="font-headline text-2xl text-primary">
+            AI Mentor
+          </h2>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
           Get personalized problem recommendations and chat with your AI DSA mentor.
-        </CardDescription>
-      </CardHeader>
+        </p>
+      </div>
 
-      <CardContent className="space-y-6 flex-shrink-0">
-        {solvedProblems.length === 0 && !isLoadingRecommendations && recommendations.length === 0 && (
-           <Alert variant="default" className="bg-accent/20 border-accent/50">
-            <Lightbulb className="h-5 w-5 text-accent" />
-            <AlertTitle className="font-headline text-accent">Log Your Progress First</AlertTitle>
-            <AlertDescription className="text-accent/80">
-              Solve and log some problems to enable personalized recommendations.
-            </AlertDescription>
-          </Alert>
-        )}
-        <Button onClick={handleGetRecommendations} disabled={isLoadingRecommendations || solvedProblems.length === 0} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground flex-shrink-0">
-          {isLoadingRecommendations ? (
-            <>
-              <Icons.Logo className="mr-2 h-5 w-5 animate-spin" />
-              Getting Recommendations...
-            </>
-          ) : (
-            "Suggest Problems"
+      {/* Recommendations Card */}
+      <Card className="flex-shrink-0 shadow-lg">
+        <CardHeader>
+          <CardTitle className="font-headline text-xl text-foreground">Problem Recommendations</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {solvedProblems.length === 0 && !isLoadingRecommendations && recommendations.length === 0 && (
+            <Alert variant="default" className="bg-accent/20 border-accent/50">
+              <Lightbulb className="h-5 w-5 text-accent" />
+              <AlertTitle className="font-headline text-accent">Log Your Progress First</AlertTitle>
+              <AlertDescription className="text-accent/80">
+                Solve and log some problems to enable personalized recommendations.
+              </AlertDescription>
+            </Alert>
           )}
-        </Button>
+          <Button onClick={handleGetRecommendations} disabled={isLoadingRecommendations || solvedProblems.length === 0} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+            {isLoadingRecommendations ? (
+              <>
+                <Icons.Logo className="mr-2 h-5 w-5 animate-spin" />
+                Getting Recommendations...
+              </>
+            ) : (
+              "Suggest Problems"
+            )}
+          </Button>
 
-        {recommendations.length > 0 && (
-          <div className="flex flex-col space-y-4 pt-4 min-h-0 flex-shrink-0"> 
-            <h3 className="font-headline text-xl text-foreground flex-shrink-0">Recommended Problems:</h3>
-            <div className="flex-1 min-h-0">
-                <ScrollArea className="h-full max-h-52 rounded-md border p-1" type="auto"> 
+          {recommendations.length > 0 && (
+            <div className="flex flex-col space-y-2 pt-2 flex-shrink-0">
+              <ScrollArea className="max-h-52 rounded-md border p-1" type="auto"> 
                 <Accordion type="single" collapsible className="w-full">
-                    {recommendations.map((rec, index) => (
+                  {recommendations.map((rec, index) => (
                     <AccordionItem value={`item-${index}`} key={index}>
-                        <AccordionTrigger className="hover:no-underline px-3">
+                      <AccordionTrigger className="hover:no-underline px-3">
                         <div className="flex items-center space-x-3 text-left w-full">
-                            {getIconForProblemType(rec.problemType, { className: "h-5 w-5 text-primary shrink-0" })}
-                            <span className="flex-1 font-medium">{rec.problemName}</span>
-                            <Badge variant={
-                                rec.difficulty === 'easy' ? 'default' :
-                                rec.difficulty === 'medium' ? 'secondary' : 'destructive'
-                            } className={`
-                                ${rec.difficulty === 'easy' ? 'bg-green-500/20 text-green-700 border-green-500/30' :
-                                rec.difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' :
-                                'bg-red-500/20 text-red-700 border-red-500/30'}
-                                shrink-0
-                            `}>
-                                {rec.difficulty}
-                            </Badge>
+                          {getIconForProblemType(rec.problemType, { className: "h-5 w-5 text-primary shrink-0" })}
+                          <span className="flex-1 font-medium">{rec.problemName}</span>
+                          <Badge variant={
+                              rec.difficulty === 'easy' ? 'default' :
+                              rec.difficulty === 'medium' ? 'secondary' : 'destructive'
+                          } className={`
+                              ${rec.difficulty === 'easy' ? 'bg-green-500/20 text-green-700 border-green-500/30' :
+                              rec.difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' :
+                              'bg-red-500/20 text-red-700 border-red-500/30'}
+                              shrink-0
+                          `}>
+                            {rec.difficulty}
+                          </Badge>
                         </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-3 pb-3">
+                      </AccordionTrigger>
+                      <AccordionContent className="px-3 pb-3">
                         <p className="text-sm text-muted-foreground mb-2">
-                            <strong className="text-foreground">Reason:</strong> {rec.reason}
+                          <strong className="text-foreground">Reason:</strong> {rec.reason}
                         </p>
                         <Button variant="outline" size="sm" asChild>
-                            <a href={rec.url} target="_blank" rel="noopener noreferrer">
+                          <a href={rec.url} target="_blank" rel="noopener noreferrer">
                             Go to Problem <ExternalLink className="ml-2 h-4 w-4" />
-                            </a>
+                          </a>
                         </Button>
-                        </AccordionContent>
+                      </AccordionContent>
                     </AccordionItem>
-                    ))}
+                  ))}
                 </Accordion>
-                </ScrollArea>
+              </ScrollArea>
             </div>
-          </div>
-        )}
-      </CardContent>
+          )}
+        </CardContent>
+      </Card>
 
-      <Separator className="my-2 md:my-4 flex-shrink-0" />
-
-      <CardContent className="flex-1 flex flex-col space-y-2 md:space-y-4 overflow-hidden pt-0 min-h-0">
-        <h3 className="font-headline text-xl text-foreground flex items-center flex-shrink-0">
-          <BotIcon className="mr-2 h-6 w-6" /> Chat with Mentor
-        </h3>
-        <div
-          className="border rounded-md p-2 md:p-4 bg-muted/20 flex-1 min-h-0 overflow-y-auto"
-          ref={chatContainerRef}
-          onScroll={handleScroll}
-        >
-          <div className="space-y-3 md:space-y-4">
-            {chatHistory.map((msg, index) => (
-              <div
-                key={index}
-                ref={index === chatHistory.length - 1 ? lastMessageRef : null}
-                className={cn(
-                  "flex items-start space-x-2 md:space-x-3 w-full",
-                  msg.role === 'user' ? "justify-end pl-6 md:pl-10" : "justify-start pr-6 md:pr-10"
-                )}
-              >
-                {msg.role === 'model' && (
-                  <Avatar className="h-7 w-7 md:h-8 md:w-8 shrink-0">
-                    <AvatarFallback><BotIcon size={16} className="md:h-5 md:w-5"/></AvatarFallback>
-                  </Avatar>
-                )}
+      {/* Chat Card */}
+      <Card className="flex-1 flex flex-col min-h-0 overflow-hidden shadow-lg">
+        <CardHeader className="flex-shrink-0">
+          <CardTitle className="font-headline text-xl text-foreground flex items-center">
+            <BotIcon className="mr-2 h-6 w-6" /> Chat with Mentor
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 flex flex-col space-y-2 md:space-y-4 pt-2 md:pt-4 min-h-0 overflow-hidden">
+          <div
+            className="border rounded-md p-2 md:p-4 bg-muted/20 flex-1 min-h-0 overflow-y-auto"
+            ref={chatContainerRef}
+            onScroll={handleScroll}
+          >
+            <div className="space-y-3 md:space-y-4">
+              {chatHistory.map((msg, index) => (
                 <div
+                  key={index}
+                  ref={index === chatHistory.length - 1 ? lastMessageRef : null}
                   className={cn(
-                    "p-2 md:p-3 rounded-lg max-w-[85%] md:max-w-[75%]",
-                    msg.role === 'user'
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-background border"
+                    "flex items-start space-x-2 md:space-x-3 w-full",
+                    msg.role === 'user' ? "justify-end pl-6 md:pl-10" : "justify-start pr-6 md:pr-10"
                   )}
                 >
-                  <ReactMarkdown
-                    className="prose prose-sm dark:prose-invert max-w-none prose-p:last:mb-0 prose-code:before:content-none prose-code:after:content-none prose-pre:p-0 prose-pre:bg-transparent"
-                    components={{
-                       pre: ({ node, children, className: preClassName, ...props }) => {
-                        let lang = '';
-                        const codeElement = React.Children.toArray(children).find(
-                          (child) => React.isValidElement(child) && child.type === 'code'
-                        ) as React.ReactElement | undefined;
+                  {msg.role === 'model' && (
+                    <Avatar className="h-7 w-7 md:h-8 md:w-8 shrink-0">
+                      <AvatarFallback><BotIcon size={16} className="md:h-5 md:w-5"/></AvatarFallback>
+                    </Avatar>
+                  )}
+                  <div
+                    className={cn(
+                      "p-2 md:p-3 rounded-lg max-w-[85%] md:max-w-[75%]",
+                      msg.role === 'user'
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-background border"
+                    )}
+                  >
+                    <ReactMarkdown
+                      className="prose prose-sm dark:prose-invert max-w-none prose-p:last:mb-0 prose-code:before:content-none prose-code:after:content-none prose-pre:p-0 prose-pre:bg-transparent"
+                      components={{
+                        pre: ({ node, children, className: preClassName, ...props }) => {
+                          let lang = '';
+                          const codeElement = React.Children.toArray(children).find(
+                            (child) => React.isValidElement(child) && child.type === 'code'
+                          ) as React.ReactElement | undefined;
 
-                        if (codeElement && codeElement.props && typeof codeElement.props.className === 'string') {
-                          const match = /language-(\w+)/.exec(codeElement.props.className);
-                          if (match) {
-                            lang = match[1];
+                          if (codeElement && codeElement.props && typeof codeElement.props.className === 'string') {
+                            const match = /language-(\w+)/.exec(codeElement.props.className);
+                            if (match) {
+                              lang = match[1];
+                            }
                           }
-                        }
-                        return (
-                          <div className="my-2 w-full rounded-md border bg-card text-card-foreground relative text-[0.9em] overflow-x-auto">
-                            {lang && <div className="absolute top-1 right-2 text-xs text-muted-foreground select-none z-10">{lang}</div>}
-                            <pre
-                              className={cn("p-3 pt-5 whitespace-pre overflow-x-auto", preClassName)}
-                              {...props}
-                            >
-                              {children}
-                            </pre>
-                          </div>
-                        );
-                      },
-                      code({ node, inline, className, children, ...restProps }) {
-                        if (inline) {
                           return (
-                            <code
-                              className={cn("bg-foreground/10 text-foreground px-1 py-0.5 rounded text-[0.9em] font-mono", className)}
+                            <div className="my-2 w-full rounded-md border bg-card text-card-foreground relative text-[0.9em] overflow-x-auto">
+                              {lang && <div className="absolute top-1 right-2 text-xs text-muted-foreground select-none z-10">{lang}</div>}
+                              <pre
+                                className={cn("p-3 pt-5 whitespace-pre overflow-x-auto", preClassName)}
+                                {...props}
+                              >
+                                {children}
+                              </pre>
+                            </div>
+                          );
+                        },
+                        code({ node, inline, className, children, ...restProps }) {
+                          if (inline) {
+                            return (
+                              <code
+                                className={cn("bg-foreground/10 text-foreground px-1 py-0.5 rounded text-[0.9em] font-mono", className)}
+                                {...(restProps as React.HTMLAttributes<HTMLElement>)}
+                              >
+                                {children}
+                              </code>
+                            );
+                          }
+                          return (
+                            <code 
+                              className={cn("font-mono", className)} 
                               {...(restProps as React.HTMLAttributes<HTMLElement>)}
                             >
                               {children}
                             </code>
                           );
                         }
-                        return (
-                          <code 
-                            className={cn("font-mono", className)} 
-                            {...(restProps as React.HTMLAttributes<HTMLElement>)}
-                          >
-                            {children}
-                          </code>
-                        );
-                      }
-                    }}
-                  >
-                    {msg.content}
-                  </ReactMarkdown>
-                </div>
-                {msg.role === 'user' && (
-                  <Avatar className="h-7 w-7 md:h-8 md:w-8 shrink-0">
-                     <AvatarFallback><User size={16} className="md:h-5 md:w-5"/></AvatarFallback>
-                  </Avatar>
-                )}
-              </div>
-            ))}
-             {isChatting && chatHistory[chatHistory.length -1]?.role === 'user' && (
-                <div
-                  className="flex items-start space-x-2 md:space-x-3 justify-start pr-6 md:pr-10"
-                  ref={lastMessageRef} 
-                >
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                  </div>
+                  {msg.role === 'user' && (
                     <Avatar className="h-7 w-7 md:h-8 md:w-8 shrink-0">
-                        <AvatarFallback><BotIcon size={16} className="md:h-5 md:w-5"/></AvatarFallback>
+                       <AvatarFallback><User size={16} className="md:h-5 md:w-5"/></AvatarFallback>
                     </Avatar>
-                    <div className="p-2 md:p-3 rounded-lg bg-background border">
-                        <Icons.Logo className="h-5 w-5 animate-spin text-primary" />
-                    </div>
+                  )}
                 </div>
-            )}
-            {chatHistory.length === 0 && !isChatting && (
-              <div className="text-center text-muted-foreground py-8">
-                Ask the AI Mentor anything about DSA!
-              </div>
-            )}
-             {showScrollButton && (
-              <div className="sticky bottom-0 flex justify-center pb-2 z-10">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={scrollToBottom}
-                  className="shadow-lg rounded-full px-4 py-2 h-auto"
-                >
-                  <ChevronDown className="h-4 w-4 mr-1" />
-                  New messages
-                </Button>
-              </div>
-            )}
+              ))}
+               {isChatting && chatHistory[chatHistory.length -1]?.role === 'user' && (
+                  <div
+                    className="flex items-start space-x-2 md:space-x-3 justify-start pr-6 md:pr-10"
+                    ref={lastMessageRef} 
+                  >
+                      <Avatar className="h-7 w-7 md:h-8 md:w-8 shrink-0">
+                          <AvatarFallback><BotIcon size={16} className="md:h-5 md:w-5"/></AvatarFallback>
+                      </Avatar>
+                      <div className="p-2 md:p-3 rounded-lg bg-background border">
+                          <Icons.Logo className="h-5 w-5 animate-spin text-primary" />
+                      </div>
+                  </div>
+              )}
+              {chatHistory.length === 0 && !isChatting && (
+                <div className="text-center text-muted-foreground py-8">
+                  Ask the AI Mentor anything about DSA!
+                </div>
+              )}
+               {showScrollButton && (
+                <div className="sticky bottom-0 flex justify-center pb-2 z-10">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={scrollToBottom}
+                    className="shadow-lg rounded-full px-4 py-2 h-auto"
+                  >
+                    <ChevronDown className="h-4 w-4 mr-1" />
+                    New messages
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-        <div className="flex items-center space-x-2 pt-1 md:pt-2 flex-shrink-0">
-          <Textarea
-            placeholder="Ask a question..."
-            value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-              }
-            }}
-            rows={1}
-            className="flex-1 resize-none text-sm min-h-[40px] md:min-h-[48px]"
-            disabled={isChatting}
-          />
-          <Button onClick={handleSendMessage} disabled={isChatting || !chatInput.trim()} size="icon" className="shrink-0 h-10 w-10 md:h-12 md:w-12">
-            <Send className="h-4 w-4 md:h-5 md:w-5" />
-            <span className="sr-only">Send message</span>
-          </Button>
-        </div>
-      </CardContent>
-
-      {STRIVER_SHEET_URL && (
-        <CardFooter className="mt-auto pt-2 md:pt-4 pb-2 md:pb-4 flex-shrink-0">
-            <Button variant="link" asChild className="text-xs md:text-sm text-muted-foreground p-0 h-auto">
-                <a href={STRIVER_SHEET_URL} target="_blank" rel="noopener noreferrer">
-                    Access Striver's A2Z DSA Sheet <ExternalLink className="ml-1 h-3 w-3" />
-                </a>
+          <div className="flex items-center space-x-2 pt-1 md:pt-2 flex-shrink-0">
+            <Textarea
+              placeholder="Ask a question..."
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              rows={1}
+              className="flex-1 resize-none text-sm min-h-[40px] md:min-h-[48px]"
+              disabled={isChatting}
+            />
+            <Button onClick={handleSendMessage} disabled={isChatting || !chatInput.trim()} size="icon" className="shrink-0 h-10 w-10 md:h-12 md:w-12">
+              <Send className="h-4 w-4 md:h-5 md:w-5" />
+              <span className="sr-only">Send message</span>
             </Button>
-        </CardFooter>
-      )}
-    </Card>
+          </div>
+        </CardContent>
+
+        {STRIVER_SHEET_URL && (
+          <CardFooter className="mt-auto pt-2 md:pt-4 pb-2 md:pb-4 flex-shrink-0">
+              <Button variant="link" asChild className="text-xs md:text-sm text-muted-foreground p-0 h-auto">
+                  <a href={STRIVER_SHEET_URL} target="_blank" rel="noopener noreferrer">
+                      Access Striver's A2Z DSA Sheet <ExternalLink className="ml-1 h-3 w-3" />
+                  </a>
+              </Button>
+          </CardFooter>
+        )}
+      </Card>
+    </div>
   );
 }
-
