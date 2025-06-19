@@ -205,7 +205,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
 
 
   return (
-    <Card className="shadow-lg flex flex-col max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-150px)] overflow-y-auto">
+    <Card className="shadow-lg flex flex-col max-h-[calc(100vh-220px)] sm:max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-150px)] overflow-y-auto">
       <CardHeader>
         <CardTitle className="font-headline text-2xl text-primary flex items-center">
           <Icons.AIMentor className="mr-2 h-7 w-7" /> AI Mentor
@@ -285,7 +285,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
           <BotIcon className="mr-2 h-6 w-6" /> Chat with Mentor
         </h3>
         <ScrollArea
-          className="flex-1 border rounded-md p-2 md:p-4 bg-muted/20 min-h-[200px] h-[400px]"
+          className="border rounded-md p-2 md:p-4 bg-muted/20 h-[300px] sm:h-[350px] md:h-[400px]"
           ref={chatContainerRef}
           onScrollCapture={handleScroll}
         >
@@ -417,7 +417,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
               }
             }}
             rows={1}
-            className="flex-1 resize-none text-sm md:text-base min-h-[40px] md:min-h-[48px]"
+            className="flex-1 resize-none text-sm min-h-[40px] md:min-h-[48px]"
             disabled={isChatting}
           />
           <Button onClick={handleSendMessage} disabled={isChatting || !chatInput.trim()} size="icon" className="shrink-0 h-10 w-10 md:h-12 md:w-12">
