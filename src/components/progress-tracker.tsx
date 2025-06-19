@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Bookmark } from 'lucide-react';
+import { MoreHorizontal } from 'lucide-react'; // Bookmark icon removed as Icons.Bookmark is used
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -109,12 +109,13 @@ export function ProgressTracker({ solvedProblems, onUpdateProblem, onRemoveProbl
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[30px]"></TableHead>
-                  <TableHead className="w-[50px]">Type</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Difficulty</TableHead>
-                  <TableHead>Date Solved</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="w-[30px] p-2"></TableHead>
+                  <TableHead className="w-[50px] p-2">Type</TableHead>
+                  <TableHead className="p-2">Title</TableHead>
+                  <TableHead className="p-2">Difficulty</TableHead>
+                  <TableHead className="p-2">Date Solved</TableHead>
+                  <TableHead className="w-[50px] text-center p-2">URL</TableHead>
+                  <TableHead className="text-right p-2">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -126,12 +127,12 @@ export function ProgressTracker({ solvedProblems, onUpdateProblem, onRemoveProbl
                     <TableCell className="p-2">
                       {getIconForProblemType(problem.type, { className: "h-5 w-5 text-muted-foreground" })}
                     </TableCell>
-                    <TableCell>
-                      <a href={problem.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary">
+                    <TableCell className="p-2">
+                      <a href={problem.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary font-medium">
                         {problem.title}
                       </a>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="p-2">
                       <Badge variant={
                         problem.difficulty === 'easy' ? 'default' :
                         problem.difficulty === 'medium' ? 'secondary' : 'destructive'
@@ -143,7 +144,12 @@ export function ProgressTracker({ solvedProblems, onUpdateProblem, onRemoveProbl
                         {problem.difficulty.charAt(0).toUpperCase() + problem.difficulty.slice(1)}
                       </Badge>
                     </TableCell>
-                    <TableCell>{format(parseISO(problem.dateSolved), 'MMM d, yyyy')}</TableCell>
+                    <TableCell className="p-2">{format(parseISO(problem.dateSolved), 'MMM d, yyyy')}</TableCell>
+                    <TableCell className="p-2 text-center">
+                      <a href={problem.url} target="_blank" rel="noopener noreferrer" title="Open solution URL">
+                        <Icons.Link className="h-4 w-4 text-primary hover:text-primary/80 inline-block" />
+                      </a>
+                    </TableCell>
                     <TableCell className="text-right p-2">
                        <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -212,3 +218,4 @@ export function ProgressTracker({ solvedProblems, onUpdateProblem, onRemoveProbl
     </>
   );
 }
+
