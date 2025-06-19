@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = React.useState<FirebaseUser | null>(null);
   const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
-  const router = useRouter(); // Keep router for logout redirect
+  const router = useRouter(); 
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -43,8 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await firebaseSignOut(auth);
-      // setCurrentUser(null); // onAuthStateChanged will handle this
-      router.push('/login'); // Redirect to login after logout
+      router.push('/login'); 
       toast({ title: "Logged Out", description: "You have been successfully logged out." });
     } catch (error: any) {
       console.error("Error logging out:", error);
@@ -56,8 +55,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      // setCurrentUser(result.user); // onAuthStateChanged will handle this
-      // router.push('/'); // Removed: Let page useEffect handle redirect
       toast({ title: "Signed In", description: "Successfully signed in with Google." });
       return result.user;
     } catch (error: any)
@@ -81,14 +78,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUpWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-      // setCurrentUser(userCredential.user); // onAuthStateChanged will handle this
-      // router.push('/'); // Removed: Let page useEffect handle redirect
       toast({ title: "Account Created", description: "Successfully signed up and logged in."});
       return userCredential.user;
     } catch (error: any) {
       console.error("Error signing up with email:", error);
-      // Server actions will display more specific errors from register/actions.ts
-      // toast({ variant: "destructive", title: "Sign Up Error", description: error.message });
       return null;
     }
   };
@@ -96,14 +89,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-      // setCurrentUser(userCredential.user); // onAuthStateChanged will handle this
-      // router.push('/'); // Removed: Let page useEffect handle redirect
       toast({ title: "Signed In", description: "Successfully signed in with email."});
       return userCredential.user;
     } catch (error: any) {
       console.error("Error signing in with email:", error);
-      // Server actions will display more specific errors from login/actions.ts
-      // toast({ variant: "destructive", title: "Sign In Error", description: error.message });
       return null;
     }
   };
@@ -117,17 +106,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithEmail,
   };
 
-  // The loading screen handled by pages like login/page.tsx or the main page.tsx
-  // is generally preferred over a global one here, to avoid layout shifts if possible.
-  // However, keeping a basic one if children absolutely depend on auth being resolved.
-  if (loading && typeof window !== 'undefined') { // Check for window to avoid SSR issues with this basic loader
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        {/* You might want a more sophisticated global loader or skeleton here */}
-        <p>Loading authentication...</p>
-      </div>
-    );
-  }
+  // The conditional rendering based on `loading && typeof window !== 'undefined'` was removed
+  // as it was causing hydration issues. Individual pages (login, register, home) 
+  // already have their own loading indicators that handle this more gracefully.
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
