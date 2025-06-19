@@ -205,7 +205,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
 
 
   return (
-    <Card className="shadow-lg flex flex-col max-h-[calc(100vh-220px)] sm:max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-150px)] overflow-y-auto">
+    <Card className="shadow-lg flex flex-col max-h-[calc(100vh-220px)] sm:max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-150px)] overflow-hidden">
       <CardHeader>
         <CardTitle className="font-headline text-2xl text-primary flex items-center">
           <Icons.AIMentor className="mr-2 h-7 w-7" /> AI Mentor
@@ -215,7 +215,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6"> {/* Recommendations section */}
         {solvedProblems.length === 0 && !isLoadingRecommendations && (
            <Alert variant="default" className="bg-accent/20 border-accent/50">
             <Lightbulb className="h-5 w-5 text-accent" />
@@ -280,12 +280,14 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
 
       <Separator className="my-2 md:my-4" />
 
-      <CardContent className="flex-1 flex flex-col space-y-2 md:space-y-4 overflow-hidden pt-0">
+      {/* Chat section wrapper */}
+      <CardContent className="flex-1 flex flex-col space-y-2 md:space-y-4 overflow-hidden pt-0 min-h-0">
         <h3 className="font-headline text-xl text-foreground flex items-center">
           <BotIcon className="mr-2 h-6 w-6" /> Chat with Mentor
         </h3>
+        {/* Chat messages area */}
         <ScrollArea
-          className="border rounded-md p-2 md:p-4 bg-muted/20 flex-1"
+          className="border rounded-md p-2 md:p-4 bg-muted/20 flex-1 min-h-0"
           ref={chatContainerRef}
           onScrollCapture={handleScroll}
         >
@@ -405,6 +407,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
             )}
           </div>
         </ScrollArea>
+        {/* Chat input section */}
         <div className="flex items-center space-x-2 pt-1 md:pt-2">
           <Textarea
             placeholder="Ask a question..."
