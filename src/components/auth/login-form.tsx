@@ -2,7 +2,8 @@
 "use client";
 
 import * as React from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom'; // useFormStatus remains from react-dom
+import { useActionState } from 'react'; // useActionState is imported from react
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,7 +23,8 @@ function SubmitButton() {
 
 export function LoginForm() {
   const initialState: FormState = { message: "", type: "" };
-  const [state, formAction] = useFormState(loginUser, initialState);
+  // Updated to use useActionState
+  const [state, formAction] = useActionState(loginUser, initialState);
 
   return (
     <form action={formAction} className="space-y-6">
@@ -32,7 +34,12 @@ export function LoginForm() {
           <AlertDescription>{state.message}</AlertDescription>
         </Alert>
       )}
-      {/* Success message could be handled here too, but redirection usually takes precedence */}
+      {state.message && state.type === "success" && (
+        <Alert variant="default" className="bg-green-500/10 border-green-500/30 text-green-700">
+           <AlertTitle>Success!</AlertTitle>
+          <AlertDescription>{state.message}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
