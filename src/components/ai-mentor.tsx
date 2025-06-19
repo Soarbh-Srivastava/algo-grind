@@ -123,11 +123,14 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     setIsChatting(true);
     const newMessage: ChatMessage = { role: 'user', content: chatInput.trim() };
 
+    // Set isAtBottom to true optimistically when user sends a message
+    setIsAtBottom(true); 
     setChatHistory(prev => [...prev, newMessage]);
     setChatInput('');
-    setIsAtBottom(true); 
+    
 
     try {
+      // For the Genkit flow, send the history *before* the new user message
       const currentHistoryForFlow = [...chatHistory, newMessage];
       const flowHistory = currentHistoryForFlow.slice(0, -1); 
       const input: ChatInput = { message: newMessage.content, history: flowHistory };
@@ -155,6 +158,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     const currentlyAtBottom = scrollHeight - scrollTop - clientHeight < atBottomThreshold;
 
     setIsAtBottom(currentlyAtBottom);
+    // Show button if not at bottom and there's enough content to scroll
     setShowScrollButton(!currentlyAtBottom && scrollHeight > clientHeight + atBottomThreshold);
   };
 
@@ -164,6 +168,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
         lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       });
     }
+    // After clicking, we are at the bottom, so hide the button
     setIsAtBottom(true);
     setShowScrollButton(false);
   };
@@ -172,6 +177,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     const lastMessage = chatHistory.length > 0 ? chatHistory[chatHistory.length - 1] : null;
 
     if (lastMessageRef.current) {
+      // If the last message was from the user, OR if it was from the model AND we are "at the bottom", scroll.
       if ((lastMessage && lastMessage.role === 'user') || (lastMessage && lastMessage.role === 'model' && isAtBottom)) {
         requestAnimationFrame(() => {
           lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -179,19 +185,21 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
       }
     }
      
+     // Update scroll button visibility based on current scroll state after history changes
      if (lastMessageRef.current) {
-      const scrollContainer = lastMessageRef.current.parentElement?.parentElement; 
+      const scrollContainer = lastMessageRef.current.parentElement?.parentElement; // Assuming ScrollArea > Viewport > ContentDiv
       if (scrollContainer) {
         const { scrollHeight, clientHeight, scrollTop } = scrollContainer;
         const currentlyAtBottom = scrollHeight - scrollTop - clientHeight < 10;
         setShowScrollButton(!currentlyAtBottom && scrollHeight > clientHeight + 10);
       } else {
-        setShowScrollButton(false);
+        setShowScrollButton(false); // Default if container not found
       }
     }
 
-  }, [chatHistory, isAtBottom]);
+  }, [chatHistory, isAtBottom]); // isAtBottom is crucial here
 
+  // Ensure button is hidden if chat is empty or too short to scroll
   React.useEffect(() => {
     if (chatHistory.length === 0) {
       setIsAtBottom(true);
@@ -281,7 +289,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
           <BotIcon className="mr-2 h-6 w-6" /> Chat with Mentor
         </h3>
         <ScrollArea
-          className="flex-1 border rounded-md p-2 md:p-4 bg-muted/20 min-h-[200px] max-h-[400px]"
+          className="border rounded-md p-2 md:p-4 bg-muted/20 h-[400px]"
           onScrollCapture={handleScroll}
         >
           <div className="space-y-3 md:space-y-4">
@@ -310,11 +318,15 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                   <ReactMarkdown
                     className="prose prose-sm dark:prose-invert max-w-none prose-p:last:mb-0 prose-code:before:content-none prose-code:after:content-none prose-pre:p-0 prose-pre:bg-transparent"
                     components={{
-                      pre: ({ node, children, className: preClassName, ...props }) => {
-                        const codeChild = Array.isArray(children) && children[0] && typeof children[0] === 'object' && 'props' in children[0] ? children[0] as React.ReactElement : null;
+                       pre: ({ node, children, className: preClassName, ...props }) => {
+                        // Extract language for the tag
                         let lang = '';
-                        if (codeChild && codeChild.props && typeof codeChild.props.className === 'string') {
-                          const match = /language-(\w+)/.exec(codeChild.props.className);
+                        const codeElement = React.Children.toArray(children).find(
+                          (child) => React.isValidElement(child) && child.type === 'code'
+                        ) as React.ReactElement | undefined;
+
+                        if (codeElement && codeElement.props && typeof codeElement.props.className === 'string') {
+                          const match = /language-(\w+)/.exec(codeElement.props.className);
                           if (match) {
                             lang = match[1];
                           }
@@ -323,7 +335,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                           <div className="my-2 w-full rounded-md border bg-card text-card-foreground relative text-[0.9em] overflow-x-auto">
                             {lang && <div className="absolute top-1 right-2 text-xs text-muted-foreground select-none z-10">{lang}</div>}
                             <pre
-                              className={cn("p-3 pt-5 whitespace-pre", preClassName)}
+                              className={cn("p-3 pt-5 whitespace-pre", preClassName)} // Removed overflow-x-auto here
                               {...props}
                             >
                               {children}
@@ -336,7 +348,6 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                           return (
                             <code
                               className={cn("bg-foreground/10 text-foreground px-1 py-0.5 rounded text-[0.9em] font-mono", className)}
-                              {...props}
                             >
                               {children}
                             </code>
@@ -344,6 +355,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                         }
                         // For code blocks, we want the <pre> to handle the styling,
                         // so just pass through children and the language class.
+                        // The <pre> wrapper will handle overflow.
                         return (
                           <code className={cn("font-mono", className)} {...props}>
                             {children}
@@ -381,7 +393,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
               </div>
             )}
              {showScrollButton && (
-              <div className="sticky bottom-0 flex justify-center pb-1 z-10">
+              <div className="sticky bottom-0 flex justify-center pb-2 z-10">
                 <Button
                   size="sm"
                   variant="secondary"
