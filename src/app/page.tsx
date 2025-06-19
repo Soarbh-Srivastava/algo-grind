@@ -1,6 +1,9 @@
+
 "use client";
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/auth-context';
 import { AppHeader } from '@/components/layout/header';
 import { ProblemForm } from '@/components/problem-form';
 import { GoalSetter } from '@/components/goal-setter';
@@ -9,21 +12,32 @@ import { ProgressVisualization } from '@/components/progress-visualization';
 import { AiMentor } from '@/components/ai-mentor';
 import { useAppData } from '@/hooks/use-app-data';
 import { Icons } from '@/components/icons';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function HomePage() {
+  const { currentUser, loading: authLoading } = useAuth();
+  const router = useRouter();
   const {
     appData,
-    isInitialized,
+    isInitialized: dataInitialized, // Renamed from isInitialized to avoid clash
+    isLoading: dataLoading, // Loading state from useAppData
     addSolvedProblem,
     updateSolvedProblem,
     removeSolvedProblem,
     updateGoalSettings,
-    toggleProblemReviewStatus, // Get the new function
+    toggleProblemReviewStatus,
   } = useAppData();
 
-  if (!isInitialized) {
+  React.useEffect(() => {
+    if (!authLoading && !currentUser) {
+      router.push('/login');
+    }
+  }, [currentUser, authLoading, router]);
+
+  // Combined loading state
+  const isLoading = authLoading || dataLoading || (currentUser && !dataInitialized);
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Icons.Logo className="h-16 w-16 animate-spin text-primary" />
@@ -31,6 +45,15 @@ export default function HomePage() {
     );
   }
 
+  if (!currentUser) {
+    // This case should ideally be covered by the redirect, but as a fallback
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <p>Redirecting to login...</p>
+      </div>
+    );
+  }
+  
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
@@ -67,7 +90,7 @@ export default function HomePage() {
                 solvedProblems={appData.solvedProblems} 
                 onUpdateProblem={updateSolvedProblem}
                 onRemoveProblem={removeSolvedProblem}
-                toggleProblemReviewStatus={toggleProblemReviewStatus} // Pass it down
+                toggleProblemReviewStatus={toggleProblemReviewStatus}
               />
           </TabsContent>
 

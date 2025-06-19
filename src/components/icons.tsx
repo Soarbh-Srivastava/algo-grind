@@ -1,3 +1,4 @@
+
 import {
   ListOrdered,
   Type,
@@ -27,7 +28,9 @@ import {
   ChevronUp,
   GoalIcon,
   Bot,
-  Bookmark // Added Bookmark icon
+  Bookmark,
+  User, // Added User icon
+  LogOut // Added LogOut icon
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import type { ProblemType } from '@/types';
@@ -58,7 +61,9 @@ export const Icons = {
   Edit: (props: LucideProps) => <Edit3 {...props} />,
   ChevronDown: (props: LucideProps) => <ChevronDown {...props} />,
   ChevronUp: (props: LucideProps) => <ChevronUp {...props} />,
-  Bookmark: (props: LucideProps) => <Bookmark {...props} />, // Added Bookmark icon
+  Bookmark: (props: LucideProps) => <Bookmark {...props} />,
+  User: (props: LucideProps) => <User {...props} />,
+  LogOut: (props: LucideProps) => <LogOut {...props} />,
   Logo: (props: LucideProps) => ( 
     <svg 
       xmlns="http://www.w3.org/2000/svg" 
