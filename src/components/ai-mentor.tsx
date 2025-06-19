@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ExternalLink, Lightbulb, Send, User, Bot as BotIcon } from 'lucide-react';
+import { ExternalLink, Lightbulb, Send, User, Bot as BotIcon, ChevronDown } from 'lucide-react'; // Added ChevronDown
 import {
   Accordion,
   AccordionContent,
@@ -53,6 +53,9 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
   const [chatHistory, setChatHistory] = React.useState<ChatMessage[]>([]);
   const [isChatting, setIsChatting] = React.useState(false);
   const lastMessageRef = React.useRef<HTMLDivElement>(null);
+
+  const [showScrollButton, setShowScrollButton] = React.useState(false);
+  const [isAtBottom, setIsAtBottom] = React.useState(true);
 
 
   const handleGetRecommendations = async () => {
@@ -145,13 +148,26 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     }
   };
   
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+    const atBottomThreshold = 50; // Pixels from bottom to be considered "at bottom"
+    const currentlyAtBottom = scrollHeight - scrollTop - clientHeight < atBottomThreshold;
+    
+    setIsAtBottom(currentlyAtBottom);
+    setShowScrollButton(!currentlyAtBottom);
+  };
+
+  const scrollToBottom = () => {
+    lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  };
+
   React.useEffect(() => {
-    if (lastMessageRef.current) {
-      requestAnimationFrame(() => {
-        lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      });
+    if (isAtBottom && lastMessageRef.current) {
+        requestAnimationFrame(() => {
+            lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        });
     }
-  }, [chatHistory]);
+  }, [chatHistory, isAtBottom]);
 
 
   return (
@@ -234,7 +250,10 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
         <h3 className="font-headline text-xl text-foreground flex items-center">
           <BotIcon className="mr-2 h-6 w-6" /> Chat with Mentor
         </h3>
-        <ScrollArea className="flex-1 border rounded-md p-2 md:p-4 bg-muted/20 min-h-[200px]">
+        <ScrollArea 
+          className="flex-1 border rounded-md p-2 md:p-4 bg-muted/20 min-h-[200px] max-h-[400px]"
+          onScrollCapture={handleScroll}
+        >
           <div className="space-y-3 md:space-y-4">
             {chatHistory.map((msg, index) => (
               <div
@@ -287,14 +306,11 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                             return (
                               <code
                                 className={cn("bg-foreground/10 text-foreground px-1 py-0.5 rounded text-[0.9em] font-mono", className)}
-                                {...props} // Keep props for inline if they are simple (e.g., key)
                               >
                                 {children}
                               </code>
                             );
                           }
-                          // For block code (inside pre), className and children are primary.
-                          // The 'pre' renderer handles the container div and the <pre> tag itself.
                           return (
                             <code className={cn("font-mono", className)} {...props}>
                               {children}
@@ -332,6 +348,19 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
               </div>
             )}
           </div>
+           {showScrollButton && (
+            <div className="sticky bottom-2 flex justify-center pb-1 z-10"> 
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={scrollToBottom}
+                className="shadow-lg rounded-full px-4 py-2 h-auto"
+              >
+                <ChevronDown className="h-4 w-4 mr-1" />
+                New messages
+              </Button>
+            </div>
+          )}
         </ScrollArea>
         <div className="flex items-center space-x-2 pt-1 md:pt-2">
           <Textarea
@@ -367,4 +396,3 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     </Card>
   );
 }
-
