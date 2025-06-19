@@ -58,5 +58,16 @@ export const GOAL_CATEGORIES: GoalCategory[] = [
     problemTypes: ['recursion', 'backtracking']
   },
 ];
-// Removed: export const LOCAL_STORAGE_KEY = 'algoGrindData';
 
+export const CODING_LANGUAGES: { value: string; label: string }[] = [
+  { value: 'javascript', label: 'JavaScript' },
+  { value: 'python', label: 'Python' },
+  { value: 'java', label: 'Java' },
+  { value: 'csharp', label: 'C#' },
+  { value: 'cpp', label: 'C++' },
+  { value: 'typescript', label: 'TypeScript' },
+  { value: 'go', label: 'Go' },
+  { value: 'rust', label: 'Rust' },
+  { value: 'kotlin', label: 'Kotlin' },
+  { value: 'swift', label: 'Swift' },
+];

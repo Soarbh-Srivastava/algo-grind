@@ -19,7 +19,7 @@ export default function HomePage() {
   const router = useRouter();
   const {
     appData,
-    isInitialized: dataInitialized, // Renamed from isInitialized to avoid conflict
+    isInitialized: dataInitialized, 
     isLoading: dataLoading, 
     addSolvedProblem,
     updateSolvedProblem,
@@ -34,7 +34,6 @@ export default function HomePage() {
     }
   }, [currentUser, authLoading, router]);
 
-  // Combined loading state
   const isLoading = authLoading || dataLoading || !dataInitialized;
 
   if (isLoading) {
@@ -47,7 +46,6 @@ export default function HomePage() {
   }
 
   if (!currentUser) {
-    // This case should ideally be handled by the redirect, but as a fallback:
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <p>Redirecting to login...</p>
@@ -103,7 +101,10 @@ export default function HomePage() {
           </TabsContent>
 
           <TabsContent value="mentor">
-            <AiMentor solvedProblems={appData.solvedProblems} />
+            <AiMentor 
+              solvedProblems={appData.solvedProblems} 
+              defaultCodingLanguage={appData.goalSettings.defaultCodingLanguage}
+            />
           </TabsContent>
         </Tabs>
       </main>

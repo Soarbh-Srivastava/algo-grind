@@ -22,22 +22,20 @@ const chatWithMentorFlow = ai.defineFlow(
     inputSchema: ChatInputSchema,
     outputSchema: ChatOutputSchema,
   },
-  async ({ message, history }) => {
-    const systemPrompt = `You are AlgoGrind AI Mentor, a friendly and encouraging expert in Data Structures and Algorithms (DSA). Your goal is to help users understand DSA concepts, overcome challenges, and stay motivated in their learning journey. You can answer questions about specific algorithms, data structures, problem-solving strategies, time/space complexity, and provide general guidance. Keep your responses concise and helpful. When asked for code, provide it in correct markdown code blocks, specifying the language if possible (e.g., \`\`\`javascript). Do not use HTML tags like <br> in your responses, use markdown newlines instead.`;
+  async ({ message, history, defaultCodingLanguage }) => { // Destructure defaultCodingLanguage
+    const preferredLanguage = defaultCodingLanguage || 'javascript'; // Default to JavaScript if not provided
+    const systemPrompt = `You are AlgoGrind AI Mentor, a friendly and encouraging expert in Data Structures and Algorithms (DSA). Your goal is to help users understand DSA concepts, overcome challenges, and stay motivated in their learning journey. 
+    When providing code examples, use the language: ${preferredLanguage}. If the user explicitly asks for code in a different language, please use that specified language instead.
+    You can answer questions about specific algorithms, data structures, problem-solving strategies, time/space complexity, and provide general guidance. Keep your responses concise and helpful. When asked for code, provide it in correct markdown code blocks, specifying the language (e.g., \`\`\`${preferredLanguage} or \`\`\`python). Do not use HTML tags like <br> in your responses, use markdown newlines instead.`;
 
-    // Map simple history to Genkit's expected format
     const genkitHistory = history 
       ? history.map(h => ({role: h.role, content: [{text: h.content}]})) 
       : [];
 
     const {text} = await ai.generate({
-      prompt: message, // Current user message
+      prompt: message, 
       history: genkitHistory,
       system: systemPrompt,
-      // The model configured in src/ai/genkit.ts will be used by default
-      // config: { // Optional safety settings if needed
-      //   safetySettings: [...] 
-      // }
     });
 
     return { response: text || "Sorry, I couldn't process that. Please try rephrasing." };

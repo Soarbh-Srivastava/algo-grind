@@ -1,5 +1,4 @@
 
-// src/components/ai-mentor.tsx
 "use client";
 
 import * as React from 'react';
@@ -31,6 +30,7 @@ import { cn } from '@/lib/utils';
 
 interface AiMentorProps {
   solvedProblems: SolvedProblem[];
+  defaultCodingLanguage?: string; // Added prop
 }
 
 type FlowProblemType = z.infer<typeof ProblemTypeEnum>;
@@ -44,7 +44,7 @@ const mapToAIProblemType = (type: AppProblemType): FlowProblemType | undefined =
 };
 
 
-export function AiMentor({ solvedProblems }: AiMentorProps) {
+export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProps) {
   const [recommendations, setRecommendations] = React.useState<RecommendationType[]>([]);
   const [isLoadingRecommendations, setIsLoadingRecommendations] = React.useState(false);
   const { toast } = useToast();
@@ -54,6 +54,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
   const [isChatting, setIsChatting] = React.useState(false);
 
   const lastMessageRef = React.useRef<HTMLDivElement>(null);
+  const chatContainerRef = React.useRef<HTMLDivElement>(null); // Ref for the ScrollArea's viewport
   const [showScrollButton, setShowScrollButton] = React.useState(false);
   const [isAtBottom, setIsAtBottom] = React.useState(true);
 
@@ -122,18 +123,20 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     if (!chatInput.trim()) return;
     setIsChatting(true);
     const newMessage: ChatMessage = { role: 'user', content: chatInput.trim() };
-
-    // Set isAtBottom to true optimistically when user sends a message
+    
     setIsAtBottom(true); 
     setChatHistory(prev => [...prev, newMessage]);
     setChatInput('');
     
 
     try {
-      // For the Genkit flow, send the history *before* the new user message
       const currentHistoryForFlow = [...chatHistory, newMessage];
       const flowHistory = currentHistoryForFlow.slice(0, -1); 
-      const input: ChatInput = { message: newMessage.content, history: flowHistory };
+      const input: ChatInput = { 
+        message: newMessage.content, 
+        history: flowHistory,
+        defaultCodingLanguage: defaultCodingLanguage || 'javascript', // Pass default language
+      };
 
       const result: ChatOutput = await chatWithMentor(input);
       const aiResponse: ChatMessage = { role: 'model', content: result.response };
@@ -158,17 +161,15 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     const currentlyAtBottom = scrollHeight - scrollTop - clientHeight < atBottomThreshold;
 
     setIsAtBottom(currentlyAtBottom);
-    // Show button if not at bottom and there's enough content to scroll
     setShowScrollButton(!currentlyAtBottom && scrollHeight > clientHeight + atBottomThreshold);
   };
 
   const scrollToBottom = () => {
     if(lastMessageRef.current) {
-      requestAnimationFrame(() => {
-        lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      });
+       requestAnimationFrame(() => {
+         lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+       });
     }
-    // After clicking, we are at the bottom, so hide the button
     setIsAtBottom(true);
     setShowScrollButton(false);
   };
@@ -177,7 +178,6 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     const lastMessage = chatHistory.length > 0 ? chatHistory[chatHistory.length - 1] : null;
 
     if (lastMessageRef.current) {
-      // If the last message was from the user, OR if it was from the model AND we are "at the bottom", scroll.
       if ((lastMessage && lastMessage.role === 'user') || (lastMessage && lastMessage.role === 'model' && isAtBottom)) {
         requestAnimationFrame(() => {
           lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -185,21 +185,17 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
       }
     }
      
-     // Update scroll button visibility based on current scroll state after history changes
-     if (lastMessageRef.current) {
-      const scrollContainer = lastMessageRef.current.parentElement?.parentElement; // Assuming ScrollArea > Viewport > ContentDiv
-      if (scrollContainer) {
-        const { scrollHeight, clientHeight, scrollTop } = scrollContainer;
-        const currentlyAtBottom = scrollHeight - scrollTop - clientHeight < 10;
-        setShowScrollButton(!currentlyAtBottom && scrollHeight > clientHeight + 10);
-      } else {
-        setShowScrollButton(false); // Default if container not found
-      }
+     if (chatContainerRef.current) {
+      const scrollContainer = chatContainerRef.current;
+      const { scrollHeight, clientHeight, scrollTop } = scrollContainer;
+      const currentlyAtBottom = scrollHeight - scrollTop - clientHeight < 10;
+      setShowScrollButton(!currentlyAtBottom && scrollHeight > clientHeight + 10);
+    } else {
+        setShowScrollButton(false); 
     }
 
-  }, [chatHistory, isAtBottom]); // isAtBottom is crucial here
+  }, [chatHistory, isAtBottom]); 
 
-  // Ensure button is hidden if chat is empty or too short to scroll
   React.useEffect(() => {
     if (chatHistory.length === 0) {
       setIsAtBottom(true);
@@ -291,6 +287,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
         <ScrollArea
           className="border rounded-md p-2 md:p-4 bg-muted/20 h-[400px]"
           onScrollCapture={handleScroll}
+          ref={chatContainerRef}
         >
           <div className="space-y-3 md:space-y-4">
             {chatHistory.map((msg, index) => (
@@ -319,7 +316,6 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                     className="prose prose-sm dark:prose-invert max-w-none prose-p:last:mb-0 prose-code:before:content-none prose-code:after:content-none prose-pre:p-0 prose-pre:bg-transparent"
                     components={{
                        pre: ({ node, children, className: preClassName, ...props }) => {
-                        // Extract language for the tag
                         let lang = '';
                         const codeElement = React.Children.toArray(children).find(
                           (child) => React.isValidElement(child) && child.type === 'code'
@@ -335,7 +331,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                           <div className="my-2 w-full rounded-md border bg-card text-card-foreground relative text-[0.9em] overflow-x-auto">
                             {lang && <div className="absolute top-1 right-2 text-xs text-muted-foreground select-none z-10">{lang}</div>}
                             <pre
-                              className={cn("p-3 pt-5 whitespace-pre", preClassName)} // Removed overflow-x-auto here
+                              className={cn("p-3 pt-5 whitespace-pre", preClassName)}
                               {...props}
                             >
                               {children}
@@ -353,9 +349,6 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                             </code>
                           );
                         }
-                        // For code blocks, we want the <pre> to handle the styling,
-                        // so just pass through children and the language class.
-                        // The <pre> wrapper will handle overflow.
                         return (
                           <code className={cn("font-mono", className)} {...props}>
                             {children}

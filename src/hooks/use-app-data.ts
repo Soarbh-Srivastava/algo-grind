@@ -1,3 +1,4 @@
+
 // src/hooks/use-app-data.ts
 import { useState, useEffect, useCallback } from 'react';
 import type { AppData, SolvedProblem, GoalSettings } from '@/types';
@@ -14,6 +15,7 @@ const getDefaultGoalSettings = (): GoalSettings => ({
     categoryId: category.id,
     target: category.defaultTarget,
   })),
+  defaultCodingLanguage: 'javascript', // Default language
 });
 
 const getDefaultAppData = (): AppData => ({
@@ -85,26 +87,29 @@ export function useAppData() {
                 goalsModified = true;
               }
 
-              // Final check if goal structure is completely off
               if (parsedData.goalSettings.goals.length !== GOAL_CATEGORIES.length && !goalsModified) {
-                // This could happen if categories were removed from constants, or data is very old
-                parsedData.goalSettings = getDefaultGoalSettings(); // Reset to default
+                parsedData.goalSettings = getDefaultGoalSettings(); 
                 goalsModified = true;
               }
               if (goalsModified) {
                 shouldUpdateFirestore = true;
               }
           }
-          if (!parsedData.goalSettings.period) { // Ensure period exists
+          if (!parsedData.goalSettings.period) { 
               parsedData.goalSettings.period = getDefaultGoalSettings().period;
               shouldUpdateFirestore = true;
           }
+          // Initialize defaultCodingLanguage if missing
+          if (typeof parsedData.goalSettings.defaultCodingLanguage === 'undefined') {
+            parsedData.goalSettings.defaultCodingLanguage = getDefaultGoalSettings().defaultCodingLanguage;
+            shouldUpdateFirestore = true;
+          }
+
 
           if (typeof parsedData.solvedProblems === 'undefined' || !Array.isArray(parsedData.solvedProblems)) {
-            parsedData.solvedProblems = []; // Initialize if missing or not an array
+            parsedData.solvedProblems = []; 
             shouldUpdateFirestore = true;
           } else {
-             // Ensure all problems have an ID and isForReview
             parsedData.solvedProblems = parsedData.solvedProblems.map(p => ({
               ...p,
               id: p.id || crypto.randomUUID(), 
@@ -117,7 +122,7 @@ export function useAppData() {
           if (shouldUpdateFirestore) {
             const updatePayload: Partial<AppData> = {};
             if (parsedData.goalSettings) updatePayload.goalSettings = parsedData.goalSettings;
-            if (parsedData.solvedProblems) updatePayload.solvedProblems = parsedData.solvedProblems; // Always update if modified
+            if (parsedData.solvedProblems) updatePayload.solvedProblems = parsedData.solvedProblems; 
 
             if (Object.keys(updatePayload).length > 0) {
                  await updateDoc(dataDocRef, updatePayload);
@@ -125,7 +130,6 @@ export function useAppData() {
           }
 
         } else {
-          // Document doesn't exist, create it with default data
           const defaultData = getDefaultAppData();
           await setDoc(dataDocRef, defaultData);
           setAppData(defaultData);
@@ -145,7 +149,7 @@ export function useAppData() {
             "}"
           );
         }
-        setAppData(getDefaultAppData()); // Fallback to default local state on error
+        setAppData(getDefaultAppData()); 
       } finally {
         setIsInitialized(true);
         setIsLoadingStorage(false);
@@ -155,7 +159,7 @@ export function useAppData() {
   }, [dataDocRef, currentUser, authLoading]); 
 
   const addSolvedProblem = useCallback(async (problem: Omit<SolvedProblem, 'id'>) => {
-    if (!dataDocRef || !currentUser) return; // Do nothing if not logged in or docRef not set
+    if (!dataDocRef || !currentUser) return; 
     const newProblem: SolvedProblem = { ...problem, id: crypto.randomUUID(), isForReview: problem.isForReview ?? false };
     try {
       await updateDoc(dataDocRef, {
@@ -173,7 +177,7 @@ export function useAppData() {
   const updateSolvedProblem = useCallback(async (updatedProblem: SolvedProblem) => {
     if (!dataDocRef || !currentUser) return;
     try {
-      const currentDocSnap = await getDoc(dataDocRef); // Fetch fresh doc
+      const currentDocSnap = await getDoc(dataDocRef); 
       if (currentDocSnap.exists()) {
         const currentData = currentDocSnap.data() as AppData;
         const updatedProblems = (currentData.solvedProblems || []).map(p => 
@@ -193,7 +197,7 @@ export function useAppData() {
   const removeSolvedProblem = useCallback(async (problemId: string) => {
     if (!dataDocRef || !currentUser) return;
     try {
-      const currentDocSnap = await getDoc(dataDocRef); // Fetch fresh doc
+      const currentDocSnap = await getDoc(dataDocRef); 
       if (currentDocSnap.exists()) {
         const currentData = currentDocSnap.data() as AppData;
         const problemToRemove = (currentData.solvedProblems || []).find(p => p.id === problemId);
@@ -215,12 +219,17 @@ export function useAppData() {
   const updateGoalSettings = useCallback(async (settings: GoalSettings) => {
     if (!dataDocRef || !currentUser) return;
     try {
+      // Ensure defaultCodingLanguage is part of the settings being saved
+      const settingsToSave: GoalSettings = {
+        ...settings,
+        defaultCodingLanguage: settings.defaultCodingLanguage || getDefaultGoalSettings().defaultCodingLanguage,
+      };
       await updateDoc(dataDocRef, {
-        goalSettings: settings
+        goalSettings: settingsToSave
       });
       setAppData(prev => ({
         ...prev,
-        goalSettings: settings,
+        goalSettings: settingsToSave,
       }));
     } catch (error) {
       console.error("Failed to update goal settings in Firestore:", error);
@@ -230,7 +239,7 @@ export function useAppData() {
   const toggleProblemReviewStatus = useCallback(async (problemId: string) => {
     if (!dataDocRef || !currentUser) return;
     try {
-      const currentDocSnap = await getDoc(dataDocRef); // Fetch fresh doc
+      const currentDocSnap = await getDoc(dataDocRef); 
       if (currentDocSnap.exists()) {
         const currentData = currentDocSnap.data() as AppData;
         const updatedProblems = (currentData.solvedProblems || []).map(p =>
@@ -249,8 +258,8 @@ export function useAppData() {
 
   return {
     appData,
-    isInitialized, // is data loading attempted (even if user is null)
-    isLoading: authLoading || isLoadingStorage, // True if auth is loading OR storage is loading
+    isInitialized, 
+    isLoading: authLoading || isLoadingStorage, 
     addSolvedProblem,
     updateSolvedProblem,
     removeSolvedProblem,

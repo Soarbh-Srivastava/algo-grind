@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -13,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import type { GoalSettings, Goal } from '@/types';
-import { GOAL_CATEGORIES } from '@/lib/constants';
+import { GOAL_CATEGORIES, CODING_LANGUAGES } from '@/lib/constants'; // Added CODING_LANGUAGES
 import { Icons } from './icons';
 import { Separator } from './ui/separator';
 
@@ -25,6 +26,7 @@ const goalSchema = z.object({
 const goalSettingsSchema = z.object({
   period: z.enum(['daily', 'weekly']),
   goals: z.array(goalSchema),
+  defaultCodingLanguage: z.string().optional(), // Added
 });
 
 type GoalSettingsFormValues = z.infer<typeof goalSettingsSchema>;
@@ -48,6 +50,7 @@ export function GoalSetter({ currentSettings, onUpdateSettings }: GoalSetterProp
           target: existingGoal ? existingGoal.target : category.defaultTarget,
         };
       }),
+      defaultCodingLanguage: currentSettings.defaultCodingLanguage || 'javascript', // Default value
     },
   });
 
@@ -61,14 +64,15 @@ export function GoalSetter({ currentSettings, onUpdateSettings }: GoalSetterProp
           target: existingGoal ? existingGoal.target : category.defaultTarget,
         };
       }),
+      defaultCodingLanguage: currentSettings.defaultCodingLanguage || 'javascript', // Reset value
     });
   }, [currentSettings, form]);
 
   function onSubmit(data: GoalSettingsFormValues) {
-    onUpdateSettings(data as GoalSettings); // Cast is safe due to schema alignment
+    onUpdateSettings(data as GoalSettings); 
     toast({
       title: 'Goals Updated',
-      description: `Your ${data.period} goals have been saved.`,
+      description: `Your ${data.period} goals and preferences have been saved.`,
     });
   }
 
@@ -79,33 +83,59 @@ export function GoalSetter({ currentSettings, onUpdateSettings }: GoalSetterProp
           <Icons.Goal className="mr-2 h-7 w-7" /> Set Your Grind Goals
         </CardTitle>
         <CardDescription>
-          Define your consistency targets. How many problems of each type will you conquer?
+          Define your consistency targets and default coding language for the AI Mentor.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <FormField
-              control={form.control}
-              name="period"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Goal Period</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select period" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="daily">Daily</SelectItem>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="period"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Goal Period</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select period" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="defaultCodingLanguage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Default Coding Language</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select language" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {CODING_LANGUAGES.map(lang => (
+                          <SelectItem key={lang.value} value={lang.value}>
+                            {lang.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
             <Separator />
 
@@ -132,7 +162,7 @@ export function GoalSetter({ currentSettings, onUpdateSettings }: GoalSetterProp
             </div>
 
             <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              Save Goals
+              Save Goals & Preferences
             </Button>
           </form>
         </Form>
