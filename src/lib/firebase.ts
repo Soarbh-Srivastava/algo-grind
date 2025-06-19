@@ -2,21 +2,33 @@
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getFirestore, type Firestore } from "firebase/firestore";
 
-// IMPORTANT: For a production app, move these to environment variables!
+// Firebase configuration using environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyCC9S4er3lXdll5G3bZTZFUFnUFRLFnEp8",
-  authDomain: "easy-apply-ef76e.firebaseapp.com",
-  projectId: "easy-apply-ef76e",
-  storageBucket: "easy-apply-ef76e.firebasestorage.app",
-  messagingSenderId: "49124194703",
-  appId: "1:49124194703:web:eb98850733ffbeade433fa",
-  measurementId: "G-MPZ9WQW17Z"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 let app: FirebaseApp;
 let db: Firestore;
 
 if (!getApps().length) {
+  if (
+    !firebaseConfig.apiKey ||
+    !firebaseConfig.authDomain ||
+    !firebaseConfig.projectId ||
+    !firebaseConfig.storageBucket ||
+    !firebaseConfig.messagingSenderId ||
+    !firebaseConfig.appId
+  ) {
+    console.error("Firebase configuration is missing. Make sure all NEXT_PUBLIC_FIREBASE_ environment variables are set in your .env file.");
+    // Potentially throw an error or handle this state appropriately
+    // For now, we'll proceed, but Firebase initialization will likely fail or be incomplete.
+  }
   app = initializeApp(firebaseConfig);
 } else {
   app = getApps()[0];
