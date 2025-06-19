@@ -7,9 +7,8 @@ import {
   signOut as firebaseSignOut, 
   GoogleAuthProvider, 
   signInWithPopup,
+  signInWithEmailAndPassword, // Added for email sign-in
   type User as FirebaseUser
-  // Removed: createUserWithEmailAndPassword,
-  // Removed: signInWithEmailAndPassword
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -20,8 +19,7 @@ interface AuthContextType {
   loading: boolean;
   logout: () => Promise<void>;
   signInWithGoogle: () => Promise<FirebaseUser | null>;
-  // Removed: signUpWithEmail: (email: string, pass: string) => Promise<FirebaseUser | null>;
-  // Removed: signInWithEmail: (email: string, pass: string) => Promise<FirebaseUser | null>;
+  signInWithEmail: (email: string, pass: string) => Promise<FirebaseUser | null>; // Re-added
 }
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
@@ -36,9 +34,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       setLoading(false);
+      // Solution 3: More robust redirect, can be enabled if needed
+      // const wasLoggedOut = !currentUser && loading; // Needs careful state management for 'wasLoggedOut'
+      // if (user && (window.location.pathname === '/login' || window.location.pathname === '/register')) {
+      //   router.push('/');
+      // }
     });
     return () => unsubscribe();
-  }, []);
+  }, [router]); // Added router to dependency array if used in commented out section
 
   const logout = async () => {
     try {
@@ -55,11 +58,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      toast({ title: "Signed In", description: "Successfully signed in with Google." });
       // Redirection for Google Sign-In will be handled by useEffect in pages
+      // toast({ title: "Signed In", description: "Successfully signed in with Google." }); // Toast handled by page redirection or form
       return result.user;
-    } catch (error: any)
-       {
+    } catch (error: any) {
       console.error("Error signing in with Google:", error);
       let description = "An unexpected error occurred. Please try again.";
       if (error.code === 'auth/popup-closed-by-user') {
@@ -76,16 +78,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Removed signUpWithEmail method
-  // Removed signInWithEmail method
+  const signInWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+      // Toast and redirection are handled by the calling component or page effect
+      return userCredential.user;
+    } catch (error: any) {
+      console.error("Error signing in with email from AuthContext:", error);
+      // Let the calling component handle the error message display
+      throw error; // Re-throw the error so the form can catch it
+    }
+  };
+
 
   const value: AuthContextType = {
     currentUser,
     loading,
     logout,
     signInWithGoogle,
-    // Removed: signUpWithEmail,
-    // Removed: signInWithEmail,
+    signInWithEmail, // Added back
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
