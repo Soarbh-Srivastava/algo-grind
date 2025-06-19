@@ -4,21 +4,22 @@
 import * as React from 'react';
 import { useFormStatus } from 'react-dom';
 import { useActionState } from 'react';
-import { useRouter } from 'next/navigation'; // Added
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { loginUser, type FormState } from '@/app/login/actions';
+import { loginUser } from '@/app/login/actions';
+import type { FormState } from '@/app/login/actions';
 import { Icons } from '@/components/icons';
-import { useAuth } from '@/context/auth-context'; // Added
+import { useAuth } from '@/context/auth-context';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={pending}>
       {pending ? <Icons.Logo className="mr-2 h-4 w-4 animate-spin" /> : null}
-      Sign In
+      Login
     </Button>
   );
 }
@@ -26,8 +27,8 @@ function SubmitButton() {
 export function LoginForm() {
   const initialState: FormState = { message: "", type: "" };
   const [state, formAction] = useActionState(loginUser, initialState);
-  const router = useRouter(); // Added
-  const { currentUser, loading: authLoading } = useAuth(); // Added
+  const router = useRouter();
+  const { currentUser, loading: authLoading } = useAuth();
 
   React.useEffect(() => {
     // Redirect if login was successful and user is now available in context
@@ -45,12 +46,11 @@ export function LoginForm() {
         </Alert>
       )}
       {state.message && state.type === "success" && (
-        <Alert variant="default" className="bg-green-500/10 border-green-500/30 text-green-700">
+         <Alert variant="default" className="bg-green-500/10 border-green-500/30 text-green-700">
            <AlertTitle>Success!</AlertTitle>
           <AlertDescription>{state.message}</AlertDescription>
         </Alert>
       )}
-
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
