@@ -22,6 +22,7 @@ export interface SolvedProblem {
   difficulty: Difficulty;
   url: string;
   dateSolved: string; // YYYY-MM-DD
+  isForReview?: boolean; // Added for review feature
 }
 
 export interface Goal {

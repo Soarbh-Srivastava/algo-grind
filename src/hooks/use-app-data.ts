@@ -37,6 +37,11 @@ export function useAppData() {
             }
           }
         }
+        // Initialize isForReview for older data
+        parsedData.solvedProblems = parsedData.solvedProblems.map(p => ({
+          ...p,
+          isForReview: p.isForReview ?? false,
+        }));
         setAppData(parsedData);
       } else {
         setAppData(getDefaultAppData());
@@ -61,14 +66,14 @@ export function useAppData() {
   const addSolvedProblem = useCallback((problem: Omit<SolvedProblem, 'id'>) => {
     setAppData(prev => ({
       ...prev,
-      solvedProblems: [...prev.solvedProblems, { ...problem, id: crypto.randomUUID() }],
+      solvedProblems: [...prev.solvedProblems, { ...problem, id: crypto.randomUUID(), isForReview: problem.isForReview ?? false }],
     }));
   }, []);
 
   const updateSolvedProblem = useCallback((updatedProblem: SolvedProblem) => {
     setAppData(prev => ({
       ...prev,
-      solvedProblems: prev.solvedProblems.map(p => p.id === updatedProblem.id ? updatedProblem : p),
+      solvedProblems: prev.solvedProblems.map(p => p.id === updatedProblem.id ? {...updatedProblem, isForReview: updatedProblem.isForReview ?? false } : p),
     }));
   }, []);
   
@@ -101,6 +106,15 @@ export function useAppData() {
     });
   }, []);
 
+  const toggleProblemReviewStatus = useCallback((problemId: string) => {
+    setAppData(prev => ({
+      ...prev,
+      solvedProblems: prev.solvedProblems.map(p => 
+        p.id === problemId ? { ...p, isForReview: !p.isForReview } : p
+      ),
+    }));
+  }, []);
+
 
   return {
     appData,
@@ -110,6 +124,7 @@ export function useAppData() {
     removeSolvedProblem,
     updateGoalSettings,
     updateSingleGoal,
+    toggleProblemReviewStatus, // Export new function
     solvedProblems: appData.solvedProblems,
     goalSettings: appData.goalSettings,
   };

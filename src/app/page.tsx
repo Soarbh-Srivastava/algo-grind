@@ -20,6 +20,7 @@ export default function HomePage() {
     updateSolvedProblem,
     removeSolvedProblem,
     updateGoalSettings,
+    toggleProblemReviewStatus, // Get the new function
   } = useAppData();
 
   if (!isInitialized) {
@@ -66,6 +67,7 @@ export default function HomePage() {
                 solvedProblems={appData.solvedProblems} 
                 onUpdateProblem={updateSolvedProblem}
                 onRemoveProblem={removeSolvedProblem}
+                toggleProblemReviewStatus={toggleProblemReviewStatus} // Pass it down
               />
           </TabsContent>
 

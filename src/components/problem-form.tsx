@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox'; // Import Checkbox
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
@@ -33,6 +33,7 @@ const problemFormSchema = z.object({
   dateSolved: z.date({
     required_error: "A date for when the problem was solved is required.",
   }),
+  isForReview: z.boolean().optional(), // Add isForReview to schema
 });
 
 type ProblemFormValues = z.infer<typeof problemFormSchema>;
@@ -56,12 +57,14 @@ export function ProblemForm({
     defaultValues: existingProblem 
       ? { 
           ...existingProblem, 
-          dateSolved: new Date(existingProblem.dateSolved) 
+          dateSolved: new Date(existingProblem.dateSolved),
+          isForReview: existingProblem.isForReview ?? false,
         } 
       : {
           title: '',
           url: '',
           dateSolved: new Date(),
+          isForReview: false,
         },
   });
 
@@ -69,7 +72,8 @@ export function ProblemForm({
     if (existingProblem) {
       form.reset({
         ...existingProblem,
-        dateSolved: new Date(existingProblem.dateSolved)
+        dateSolved: new Date(existingProblem.dateSolved),
+        isForReview: existingProblem.isForReview ?? false,
       });
     } else {
       form.reset({
@@ -78,6 +82,7 @@ export function ProblemForm({
         dateSolved: new Date(),
         type: undefined,
         difficulty: undefined,
+        isForReview: false,
       });
     }
   }, [existingProblem, form]);
@@ -87,6 +92,7 @@ export function ProblemForm({
     const problemData = {
       ...data,
       dateSolved: format(data.dateSolved, 'yyyy-MM-dd'),
+      isForReview: data.isForReview ?? false,
     };
     if (existingProblem && onUpdateProblem) {
         onUpdateProblem({ ...problemData, id: existingProblem.id });
@@ -94,7 +100,7 @@ export function ProblemForm({
     } else {
         onAddProblem(problemData);
         toast({ title: "Problem Added", description: `${data.title} has been added to your log.` });
-        form.reset({ title: '', url: '', dateSolved: new Date(), type: undefined, difficulty: undefined });
+        form.reset({ title: '', url: '', dateSolved: new Date(), type: undefined, difficulty: undefined, isForReview: false });
     }
   }
 
@@ -193,42 +199,59 @@ export function ProblemForm({
                 </FormItem>
               )}
             />
-
-            <FormField
-              control={form.control}
-              name="dateSolved"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date Solved</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          <Icons.Calendar className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                        </Button>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+              <FormField
+                control={form.control}
+                name="dateSolved"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Date Solved</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            <Icons.Calendar className="mr-2 h-4 w-4" />
+                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="isForReview"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-2 pb-2">
+                     <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
                       </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormLabel className="font-normal !mt-0">Mark for Review</FormLabel>
+                  </FormItem>
+                )}
+              />
+            </div>
             
             <div className="flex space-x-2 justify-end">
                 {existingProblem && onCancelEdit && (

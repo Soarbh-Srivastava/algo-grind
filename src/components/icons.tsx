@@ -26,7 +26,8 @@ import {
   ChevronDown,
   ChevronUp,
   GoalIcon,
-  Bot
+  Bot,
+  Bookmark // Added Bookmark icon
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import type { ProblemType } from '@/types';
@@ -36,13 +37,13 @@ export const Icons = {
   String: (props: LucideProps) => <Type {...props} />,
   SlidingWindow: (props: LucideProps) => <MoveHorizontal {...props} />,
   PrefixSum: (props: LucideProps) => <Sigma {...props} />,
-  DP: (props: LucideProps) => <BrainCircuit {...props} />, // Changed from Zap to BrainCircuit
+  DP: (props: LucideProps) => <BrainCircuit {...props} />, 
   Tree: (props: LucideProps) => <Network {...props} />,
   Recursion: (props: LucideProps) => <Repeat {...props} />,
   Backtracking: (props: LucideProps) => <Undo2 {...props} />,
   Goal: (props: LucideProps) => <Target {...props} />,
   Analytics: (props: LucideProps) => <BarChart3 {...props} />,
-  AIMentor: (props: LucideProps) => <Bot {...props} />, // Changed from Sparkles to Bot
+  AIMentor: (props: LucideProps) => <Bot {...props} />, 
   GitHub: (props: LucideProps) => <Github {...props} />,
   Link: (props: LucideProps) => <Link {...props} />,
   Calendar: (props: LucideProps) => <CalendarDays {...props} />,
@@ -57,7 +58,8 @@ export const Icons = {
   Edit: (props: LucideProps) => <Edit3 {...props} />,
   ChevronDown: (props: LucideProps) => <ChevronDown {...props} />,
   ChevronUp: (props: LucideProps) => <ChevronUp {...props} />,
-  Logo: (props: LucideProps) => ( // Placeholder Logo
+  Bookmark: (props: LucideProps) => <Bookmark {...props} />, // Added Bookmark icon
+  Logo: (props: LucideProps) => ( 
     <svg 
       xmlns="http://www.w3.org/2000/svg" 
       viewBox="0 0 24 24" 
