@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -7,7 +8,7 @@ import { ChartContainer, ChartTooltipContent, ChartLegend, ChartLegendContent } 
 import type { SolvedProblem, GoalSettings, ProblemType } from '@/types';
 import { GOAL_CATEGORIES, PROBLEM_TYPES } from '@/lib/constants';
 import { Icons, getIconForProblemType } from '@/components/icons';
-import { endOfWeek, startOfWeek, eachDayOfInterval, format, isWithinInterval, parseISO, subWeeks, getWeek } from 'date-fns';
+import { endOfWeek, startOfWeek, eachDayOfInterval, format, isWithinInterval, parseISO, subWeeks, getWeek, startOfDay, endOfDay } from 'date-fns';
 
 interface ProgressVisualizationProps {
   solvedProblems: SolvedProblem[];
@@ -32,13 +33,13 @@ export function ProgressVisualization({ solvedProblems, goalSettings }: Progress
   const goalAdherenceChartData = React.useMemo(() => {
     return GOAL_CATEGORIES.map(category => {
       const solvedCount = solvedProblems.filter(sp => {
-        // Filter based on the current period (e.g., this week or today)
         const problemDate = parseISO(sp.dateSolved);
         let interval: Interval;
+        const today = new Date();
         if (goalSettings.period === 'weekly') {
-          interval = { start: startOfWeek(new Date(), { weekStartsOn: 1 }), end: endOfWeek(new Date(), { weekStartsOn: 1 }) };
+          interval = { start: startOfWeek(today, { weekStartsOn: 1 }), end: endOfWeek(today, { weekStartsOn: 1 }) };
         } else { // daily
-          interval = { start: new Date(), end: new Date() };
+          interval = { start: startOfDay(today), end: endOfDay(today) };
         }
         return category.problemTypes.includes(sp.type) && isWithinInterval(problemDate, interval);
       }).length;

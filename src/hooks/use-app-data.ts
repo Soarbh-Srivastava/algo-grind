@@ -4,7 +4,7 @@ import type { AppData, SolvedProblem, GoalSettings, Goal } from '@/types';
 import { LOCAL_STORAGE_KEY, GOAL_CATEGORIES } from '@/lib/constants';
 
 const getDefaultGoalSettings = (): GoalSettings => ({
-  period: 'weekly', // Changed to weekly
+  period: 'daily', // Changed to daily
   goals: GOAL_CATEGORIES.map(category => ({
     categoryId: category.id,
     target: category.defaultTarget,
