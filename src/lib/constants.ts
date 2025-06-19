@@ -58,5 +58,4 @@ export const GOAL_CATEGORIES: GoalCategory[] = [
     problemTypes: ['recursion', 'backtracking']
   },
 ];
-
-export const LOCAL_STORAGE_KEY = 'algoGrindData';
+// Removed: export const LOCAL_STORAGE_KEY = 'algoGrindData';
