@@ -1,3 +1,4 @@
+
 // src/ai/flows/personalized-recommendations.ts
 'use server';
 
@@ -32,7 +33,7 @@ const RecommendationSchema = z.object({
   problemType: ProblemTypeEnum.describe('The category of the recommended problem.'),
   problemName: z.string().describe('The name of the recommended problem.'),
   difficulty: z.enum(['easy', 'medium', 'hard']).describe('Difficulty of the problem'),
-  url: z.string().url().describe('URL of the recommended problem from Striver sheet.'),
+  url: z.string().describe('URL of the recommended problem from Striver sheet.'), // Removed .url()
   reason: z.string().describe('Why this problem is being recommended')
 });
 
@@ -82,3 +83,4 @@ const personalizedRecommendationsFlow = ai.defineFlow(
     return output!;
   }
 );
+
