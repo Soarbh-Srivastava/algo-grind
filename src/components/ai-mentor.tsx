@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ExternalLink, Lightbulb, Send, User, Bot as BotIcon, ChevronDown } from 'lucide-react'; // Added ChevronDown
+import { ExternalLink, Lightbulb, Send, User, Bot as BotIcon, ChevronDown } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -37,7 +37,7 @@ type FlowProblemType = z.infer<typeof ProblemTypeEnum>;
 
 const mapToAIProblemType = (type: AppProblemType): FlowProblemType | undefined => {
   const validTypes = ProblemTypeEnum.options;
-  if (validTypes.includes(type)) {
+  if (validTypes.includes(type as FlowProblemType)) {
     return type as FlowProblemType;
   }
   return undefined; 
@@ -52,8 +52,8 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
   const [chatInput, setChatInput] = React.useState('');
   const [chatHistory, setChatHistory] = React.useState<ChatMessage[]>([]);
   const [isChatting, setIsChatting] = React.useState(false);
+  
   const lastMessageRef = React.useRef<HTMLDivElement>(null);
-
   const [showScrollButton, setShowScrollButton] = React.useState(false);
   const [isAtBottom, setIsAtBottom] = React.useState(true);
 
@@ -78,7 +78,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     if (aiSolvedProblems.length === 0 && solvedProblems.length > 0) {
        toast({
         variant: "destructive",
-        title: "No Compatible Problems for Recommendations",
+        title: "No Compatible Problems",
         description: "None of your solved problems have types recognized by the AI for recommendations. Log more problems with standard types.",
       });
       setIsLoadingRecommendations(false);
@@ -123,10 +123,12 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     setIsChatting(true);
     const newMessage: ChatMessage = { role: 'user', content: chatInput.trim() };
     
+    // Add user message to history
     setChatHistory(prev => [...prev, newMessage]);
     setChatInput(''); 
 
     try {
+      // Prepare history for the flow (all messages except the current new one)
       const currentHistoryForFlow = [...chatHistory, newMessage]; 
       const flowHistory = currentHistoryForFlow.slice(0, -1);
       const input: ChatInput = { message: newMessage.content, history: flowHistory }; 
@@ -150,24 +152,48 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
   
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    const atBottomThreshold = 50; // Pixels from bottom to be considered "at bottom"
+    const atBottomThreshold = 10; // Pixels from bottom to be considered "at bottom"
     const currentlyAtBottom = scrollHeight - scrollTop - clientHeight < atBottomThreshold;
     
     setIsAtBottom(currentlyAtBottom);
-    setShowScrollButton(!currentlyAtBottom);
+    setShowScrollButton(!currentlyAtBottom && scrollHeight > clientHeight + atBottomThreshold);
   };
 
   const scrollToBottom = () => {
     lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    setIsAtBottom(true);
+    setShowScrollButton(false);
   };
 
   React.useEffect(() => {
-    if (isAtBottom && lastMessageRef.current) {
+    const lastMessage = chatHistory.length > 0 ? chatHistory[chatHistory.length - 1] : null;
+
+    if (lastMessageRef.current) {
+      if (lastMessage && lastMessage.role === 'user') {
+        // Always scroll to user's own message and consider them at the bottom
         requestAnimationFrame(() => {
-            lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          setIsAtBottom(true);
+          setShowScrollButton(false);
         });
+      } else if (lastMessage && lastMessage.role === 'model' && isAtBottom) {
+        // If AI message and user was already at bottom, scroll
+        requestAnimationFrame(() => {
+          lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        });
+      }
+      // If AI message and user was scrolled up (isAtBottom is false), do nothing here.
+      // handleScroll would have shown the button if applicable.
     }
-  }, [chatHistory, isAtBottom]);
+  }, [chatHistory]); // Only re-run when chatHistory changes
+
+  // Ensure initial state or empty chat has isAtBottom true
+  React.useEffect(() => {
+    if (chatHistory.length === 0) {
+      setIsAtBottom(true);
+      setShowScrollButton(false);
+    }
+  }, [chatHistory.length]);
 
 
   return (
@@ -306,11 +332,13 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                             return (
                               <code
                                 className={cn("bg-foreground/10 text-foreground px-1 py-0.5 rounded text-[0.9em] font-mono", className)}
+                                {...props}
                               >
                                 {children}
                               </code>
                             );
                           }
+                          // Block code (handled by pre)
                           return (
                             <code className={cn("font-mono", className)} {...props}>
                               {children}
@@ -349,7 +377,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
             )}
           </div>
            {showScrollButton && (
-            <div className="sticky bottom-2 flex justify-center pb-1 z-10"> 
+            <div className="sticky bottom-0 flex justify-center pb-1 z-10"> 
               <Button
                 size="sm"
                 variant="secondary"
