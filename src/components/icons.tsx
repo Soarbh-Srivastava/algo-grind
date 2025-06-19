@@ -35,7 +35,8 @@ import {
   KeyRound,
   Sun,
   Moon,
-  Trophy, // Added Trophy icon
+  Trophy,
+  Menu, // Added Menu icon
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import type { ProblemType } from '@/types';
@@ -73,7 +74,8 @@ export const Icons = {
   Password: (props: LucideProps) => <KeyRound {...props} />,
   Sun: (props: LucideProps) => <Sun {...props} />,
   Moon: (props: LucideProps) => <Moon {...props} />,
-  Trophy: (props: LucideProps) => <Trophy {...props} />, // Added Trophy icon
+  Trophy: (props: LucideProps) => <Trophy {...props} />,
+  Menu: (props: LucideProps) => <Menu {...props} />, // Added Menu icon
   Logo: (props: LucideProps) => ( 
     <svg 
       xmlns="http://www.w3.org/2000/svg" 

@@ -10,10 +10,12 @@ import { GoalSetter } from '@/components/goal-setter';
 import { ProgressTracker } from '@/components/progress-tracker';
 import { ProgressVisualization } from '@/components/progress-visualization';
 import { AiMentor } from '@/components/ai-mentor';
-import { Leaderboard } from '@/components/leaderboard'; // Import Leaderboard
+import { Leaderboard } from '@/components/leaderboard';
 import { useAppData } from '@/hooks/use-app-data';
 import { Icons } from '@/components/icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Button } from '@/components/ui/button';
 
 export default function HomePage() {
   const { currentUser, loading: authLoading } = useAuth();
@@ -29,6 +31,9 @@ export default function HomePage() {
     toggleProblemReviewStatus,
   } = useAppData();
 
+  const [activeTab, setActiveTab] = React.useState('dashboard');
+  const [mobileSheetOpen, setMobileSheetOpen] = React.useState(false);
+
   React.useEffect(() => {
     if (!authLoading && !currentUser) {
       router.push('/login');
@@ -36,6 +41,14 @@ export default function HomePage() {
   }, [currentUser, authLoading, router]);
 
   const isLoading = authLoading || dataLoading || !dataInitialized;
+
+  const tabsConfig = [
+    { value: "dashboard", label: "Dashboard", icon: Icons.Dashboard },
+    { value: "log", label: "Problem Log", icon: Icons.Archive },
+    { value: "analytics", label: "Analytics", icon: Icons.Analytics },
+    { value: "mentor", label: "AI Mentor", icon: Icons.AIMentor },
+    { value: "leaderboard", label: "Leaderboard", icon: Icons.Trophy },
+  ];
 
   if (isLoading) {
     return (
@@ -58,23 +71,51 @@ export default function HomePage() {
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
       <main className="flex-1 container mx-auto py-8 px-4">
-        <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-6 md:sticky md:top-[calc(theme(spacing.16)+1px)] bg-background/90 backdrop-blur-sm z-30 py-2 shadow-sm">
-            <TabsTrigger value="dashboard" className="font-headline text-sm md:text-base justify-start">
-              <Icons.Dashboard className="mr-1 md:mr-2 h-4 w-4 md:h-5 md:w-5" /> Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="log" className="font-headline text-sm md:text-base justify-start">
-              <Icons.Archive className="mr-1 md:mr-2 h-4 w-4 md:h-5 md:w-5" /> Problem Log
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="font-headline text-sm md:text-base justify-start">
-              <Icons.Analytics className="mr-1 md:mr-2 h-4 w-4 md:h-5 md:w-5" /> Analytics
-            </TabsTrigger>
-            <TabsTrigger value="mentor" className="font-headline text-sm md:text-base justify-start">
-              <Icons.AIMentor className="mr-1 md:mr-2 h-4 w-4 md:h-5 md:w-5" /> AI Mentor
-            </TabsTrigger>
-            <TabsTrigger value="leaderboard" className="font-headline text-sm md:text-base justify-start">
-              <Icons.Trophy className="mr-1 md:mr-2 h-4 w-4 md:h-5 md:w-5" /> Leaderboard
-            </TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          
+          {/* Mobile Hamburger Menu Trigger & Sheet */}
+          <div className="md:hidden mb-4">
+            <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" aria-label="Open navigation menu">
+                  <Icons.Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[250px] sm:w-[300px] p-0">
+                <SheetHeader className="p-4 border-b">
+                  <SheetTitle className="font-headline text-2xl text-primary flex items-center">
+                    <Icons.Logo className="mr-2 h-7 w-7" /> Algo Grind
+                  </SheetTitle>
+                </SheetHeader>
+                <nav className="flex flex-col space-y-1 p-4">
+                  {tabsConfig.map((tab) => (
+                    <SheetClose asChild key={tab.value}>
+                      <Button
+                        variant={activeTab === tab.value ? "secondary" : "ghost"}
+                        className="w-full justify-start text-left font-headline text-base h-12"
+                        onClick={() => setActiveTab(tab.value)}
+                      >
+                        <tab.icon className="mr-3 h-5 w-5" />
+                        {tab.label}
+                      </Button>
+                    </SheetClose>
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          {/* Desktop Tabs List */}
+          <TabsList className="hidden md:grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-6 md:sticky md:top-[calc(theme(spacing.16)+1px)] bg-background/90 backdrop-blur-sm z-30 py-2 shadow-sm">
+            {tabsConfig.map((tab) => (
+              <TabsTrigger 
+                key={tab.value} 
+                value={tab.value} 
+                className="font-headline text-sm md:text-base justify-start"
+              >
+                <tab.icon className="mr-1 md:mr-2 h-4 w-4 md:h-5 md:w-5" /> {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
           
           <TabsContent value="dashboard">
