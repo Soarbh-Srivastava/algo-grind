@@ -30,7 +30,7 @@ import { cn } from '@/lib/utils';
 
 interface AiMentorProps {
   solvedProblems: SolvedProblem[];
-  defaultCodingLanguage?: string; // Added prop
+  defaultCodingLanguage?: string;
 }
 
 type FlowProblemType = z.infer<typeof ProblemTypeEnum>;
@@ -54,7 +54,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
   const [isChatting, setIsChatting] = React.useState(false);
 
   const lastMessageRef = React.useRef<HTMLDivElement>(null);
-  const chatContainerRef = React.useRef<HTMLDivElement>(null); // Ref for the ScrollArea's viewport
+  const chatContainerRef = React.useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = React.useState(false);
   const [isAtBottom, setIsAtBottom] = React.useState(true);
 
@@ -135,7 +135,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
       const input: ChatInput = { 
         message: newMessage.content, 
         history: flowHistory,
-        defaultCodingLanguage: defaultCodingLanguage || 'javascript', // Pass default language
+        defaultCodingLanguage: defaultCodingLanguage || 'javascript',
       };
 
       const result: ChatOutput = await chatWithMentor(input);
@@ -285,9 +285,9 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
           <BotIcon className="mr-2 h-6 w-6" /> Chat with Mentor
         </h3>
         <ScrollArea
-          className="border rounded-md p-2 md:p-4 bg-muted/20 h-[400px]"
-          onScrollCapture={handleScroll}
+          className="flex-1 border rounded-md p-2 md:p-4 bg-muted/20 min-h-[200px] h-[400px]"
           ref={chatContainerRef}
+          onScrollCapture={handleScroll}
         >
           <div className="space-y-3 md:space-y-4">
             {chatHistory.map((msg, index) => (
@@ -331,7 +331,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
                           <div className="my-2 w-full rounded-md border bg-card text-card-foreground relative text-[0.9em] overflow-x-auto">
                             {lang && <div className="absolute top-1 right-2 text-xs text-muted-foreground select-none z-10">{lang}</div>}
                             <pre
-                              className={cn("p-3 pt-5 whitespace-pre", preClassName)}
+                              className={cn("p-3 pt-5 whitespace-pre overflow-x-auto", preClassName)}
                               {...props}
                             >
                               {children}
@@ -339,18 +339,23 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
                           </div>
                         );
                       },
-                      code({ node, inline, className, children, ...props }) {
+                      code({ node, inline, className, children, ...restProps }) {
                         if (inline) {
                           return (
                             <code
                               className={cn("bg-foreground/10 text-foreground px-1 py-0.5 rounded text-[0.9em] font-mono", className)}
+                              {...(restProps as React.HTMLAttributes<HTMLElement>)}
                             >
                               {children}
                             </code>
                           );
                         }
+                        // This is for block code
                         return (
-                          <code className={cn("font-mono", className)} {...props}>
+                          <code 
+                            className={cn("font-mono", className)} 
+                            {...(restProps as React.HTMLAttributes<HTMLElement>)}
+                          >
                             {children}
                           </code>
                         );
