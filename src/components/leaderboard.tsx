@@ -48,9 +48,13 @@ export function Leaderboard() {
         setLeaderboardData(profiles);
         setIsLoading(false);
       }, 
-      (err) => {
+      (err: any) => {
         console.error("Error fetching leaderboard:", err);
-        setError("Could not load leaderboard data. Please try again later.");
+        let description = "Could not load leaderboard data. Please try again later.";
+        if (err.code === 'permission-denied') {
+          description = "Failed to load leaderboard due to Firestore security rules. Please ensure rules allow reading 'userPublicProfiles' collection by authenticated users.";
+        }
+        setError(description);
         setIsLoading(false);
       }
     );

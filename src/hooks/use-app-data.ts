@@ -6,6 +6,7 @@ import { GOAL_CATEGORIES } from '@/lib/constants';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, type DocumentReference, type DocumentData } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
+import { useToast } from '@/hooks/use-toast'; // Import useToast
 
 const FIRESTORE_COLLECTION_ID = 'appData';
 const USER_PUBLIC_PROFILES_COLLECTION = 'userPublicProfiles';
@@ -28,7 +29,8 @@ async function syncUserPublicProfileData(
   userUid: string,
   displayName: string | null,
   photoURL: string | null,
-  solvedProblemsCount: number
+  solvedProblemsCount: number,
+  toastInstance?: ReturnType<typeof useToast>['toast'] // Optional toast for more direct feedback if needed
 ) {
   const profileDocRef = doc(db, USER_PUBLIC_PROFILES_COLLECTION, userUid);
   try {
@@ -44,11 +46,19 @@ async function syncUserPublicProfileData(
     if (docSnap.exists()) {
       await updateDoc(profileDocRef, updateData);
     } else {
-      // If profile doesn't exist, create it (this might also be handled by auth context, but good to have a fallback)
       await setDoc(profileDocRef, updateData);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error syncing user public profile data:", error);
+    if (error.code === 'permission-denied' && toastInstance) {
+       toastInstance({ // Use the passed toastInstance if available
+        variant: "destructive",
+        title: "Firestore Sync Error",
+        description: "Could not sync public profile due to Firestore security rules. Leaderboard data might be outdated.",
+      });
+    } else if (error.code === 'permission-denied') {
+      console.error("Firestore Permission Denied: Could not sync public profile due to Firestore security rules. Leaderboard data might be outdated. User UID:", userUid);
+    }
   }
 }
 
@@ -59,6 +69,7 @@ export function useAppData() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoadingStorage, setIsLoadingStorage] = useState(true);
   const [dataDocRef, setDataDocRef] = useState<DocumentReference<DocumentData> | null>(null);
+  const { toast } = useToast(); // Get toast instance
 
   useEffect(() => {
     if (currentUser && !authLoading) {
@@ -161,11 +172,19 @@ export function useAppData() {
             currentUser.uid,
             currentUser.displayName,
             currentUser.photoURL,
-            currentAppData.solvedProblems.length
+            currentAppData.solvedProblems.length,
+            toast // Pass toast for potential errors during this initial sync
         );
 
       } catch (error: any) {
         console.error("Failed to load or initialize data from Firestore:", error);
+        if (error.code === 'permission-denied') {
+            toast({
+                variant: "destructive",
+                title: "Firestore Permission Error",
+                description: "Could not load your application data due to Firestore security rules. Please check your Firebase console.",
+            });
+        }
         setAppData(getDefaultAppData()); 
       } finally {
         setIsInitialized(true);
@@ -173,7 +192,7 @@ export function useAppData() {
       }
     }
     loadData();
-  }, [dataDocRef, currentUser, authLoading]); 
+  }, [dataDocRef, currentUser, authLoading, toast]); 
 
   const addSolvedProblem = useCallback(async (problem: Omit<SolvedProblem, 'id'>) => {
     if (!dataDocRef || !currentUser) return; 
@@ -188,10 +207,17 @@ export function useAppData() {
         solvedProblems: newSolvedProblems,
       }));
       await syncUserPublicProfileData(currentUser.uid, currentUser.displayName, currentUser.photoURL, newSolvedProblems.length);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to add problem to Firestore:", error);
+       if (error.code === 'permission-denied') {
+            toast({
+                variant: "destructive",
+                title: "Firestore Permission Error",
+                description: "Could not save your problem due to Firestore security rules.",
+            });
+        }
     }
-  }, [dataDocRef, currentUser, appData.solvedProblems]);
+  }, [dataDocRef, currentUser, appData.solvedProblems, toast]);
 
   const updateSolvedProblem = useCallback(async (updatedProblem: SolvedProblem) => {
     if (!dataDocRef || !currentUser) return;
@@ -207,13 +233,18 @@ export function useAppData() {
           ...prev,
           solvedProblems: updatedProblems,
         }));
-        // Note: Problem count doesn't change on update, so no need to sync public profile unless other info changes.
-        // If problem content change could affect leaderboard (e.g. difficulty points), sync here.
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to update problem in Firestore:", error);
+      if (error.code === 'permission-denied') {
+            toast({
+                variant: "destructive",
+                title: "Firestore Permission Error",
+                description: "Could not update your problem due to Firestore security rules.",
+            });
+        }
     }
-  }, [dataDocRef, currentUser]);
+  }, [dataDocRef, currentUser, toast]);
   
   const removeSolvedProblem = useCallback(async (problemId: string) => {
     if (!dataDocRef || !currentUser) return;
@@ -234,10 +265,17 @@ export function useAppData() {
           await syncUserPublicProfileData(currentUser.uid, currentUser.displayName, currentUser.photoURL, newSolvedProblems.length);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to remove problem from Firestore:", error);
+      if (error.code === 'permission-denied') {
+            toast({
+                variant: "destructive",
+                title: "Firestore Permission Error",
+                description: "Could not remove your problem due to Firestore security rules.",
+            });
+        }
     }
-  }, [dataDocRef, currentUser, appData.solvedProblems]);
+  }, [dataDocRef, currentUser, appData.solvedProblems, toast]);
 
   const updateGoalSettings = useCallback(async (settings: GoalSettings) => {
     if (!dataDocRef || !currentUser) return;
@@ -253,10 +291,17 @@ export function useAppData() {
         ...prev,
         goalSettings: settingsToSave,
       }));
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to update goal settings in Firestore:", error);
+      if (error.code === 'permission-denied') {
+            toast({
+                variant: "destructive",
+                title: "Firestore Permission Error",
+                description: "Could not save your goal settings due to Firestore security rules.",
+            });
+        }
     }
-  }, [dataDocRef, currentUser]);
+  }, [dataDocRef, currentUser, toast]);
 
   const toggleProblemReviewStatus = useCallback(async (problemId: string) => {
     if (!dataDocRef || !currentUser) return;
@@ -273,10 +318,17 @@ export function useAppData() {
           solvedProblems: updatedProblems,
         }));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to toggle review status in Firestore:", error);
+      if (error.code === 'permission-denied') {
+            toast({
+                variant: "destructive",
+                title: "Firestore Permission Error",
+                description: "Could not update review status due to Firestore security rules.",
+            });
+        }
     }
-  }, [dataDocRef, currentUser]);
+  }, [dataDocRef, currentUser, toast]);
 
   return {
     appData,

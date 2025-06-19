@@ -31,7 +31,7 @@ interface AuthContextType {
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
-async function updateUserPublicProfile(user: FirebaseUser, initialProblemCount?: number) {
+async function updateUserPublicProfile(user: FirebaseUser, toastInstance: ReturnType<typeof useToast>['toast'], initialProblemCount?: number) {
   if (!user) return;
   const profileDocRef = doc(db, USER_PUBLIC_PROFILES_COLLECTION, user.uid);
   try {
@@ -56,9 +56,16 @@ async function updateUserPublicProfile(user: FirebaseUser, initialProblemCount?:
         lastUpdated: profileData.lastUpdated,
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating user public profile:", error);
-    // Optionally, toast an error, but this is a background task
+    if (error.code === 'permission-denied') {
+      toastInstance({
+        variant: "destructive",
+        title: "Firestore Permission Error",
+        description: "Could not update your public profile data due to Firestore security rules. Please check your Firebase console.",
+      });
+    }
+    // Optionally, toast a generic error if not permission-denied, or let it be silent for background tasks.
   }
 }
 
@@ -72,12 +79,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
-        await updateUserPublicProfile(user); // Update public profile on auth state change
+        await updateUserPublicProfile(user, toast); // Update public profile on auth state change
       }
       setLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
 
   const logout = async () => {
     try {
