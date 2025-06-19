@@ -1,6 +1,6 @@
 // src/lib/firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
+// Removed: import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 
 // IMPORTANT: For a production app, move these to environment variables!
@@ -15,7 +15,7 @@ const firebaseConfig = {
 };
 
 let app: FirebaseApp;
-let auth: Auth;
+// Removed: let auth: Auth;
 let db: Firestore;
 
 if (!getApps().length) {
@@ -24,7 +24,7 @@ if (!getApps().length) {
   app = getApps()[0];
 }
 
-auth = getAuth(app);
+// Removed: auth = getAuth(app);
 db = getFirestore(app);
 
-export { app, auth, db };
+export { app, db /* Removed: auth */ };

@@ -1,11 +1,12 @@
-
 // src/hooks/use-app-data.ts
 import { useState, useEffect, useCallback } from 'react';
 import type { AppData, SolvedProblem, GoalSettings, Goal } from '@/types';
 import { GOAL_CATEGORIES } from '@/lib/constants';
-import { useAuth } from '@/context/auth-context';
+// Removed: import { useAuth } from '@/context/auth-context';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
+
+const HARDCODED_USER_ID = "default_local_user_data"; // Using a hardcoded ID for data persistence
 
 const getDefaultGoalSettings = (): GoalSettings => ({
   period: 'daily',
@@ -21,71 +22,60 @@ const getDefaultAppData = (): AppData => ({
 });
 
 export function useAppData() {
-  const { currentUser } = useAuth();
+  // Removed: const { currentUser } = useAuth();
   const [appData, setAppData] = useState<AppData>(getDefaultAppData());
-  const [isInitialized, setIsInitialized] = useState(false); // True once data is loaded/initialized from Firestore
-  const [isLoadingFirestore, setIsLoadingFirestore] = useState(true); // Specific loading for Firestore operations
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoadingFirestore, setIsLoadingFirestore] = useState(true);
 
-  // Fetch data from Firestore or initialize for new user
   useEffect(() => {
     async function loadData() {
-      if (currentUser) {
-        setIsLoadingFirestore(true);
-        const userDocRef = doc(db, 'users', currentUser.uid);
-        try {
-          const docSnap = await getDoc(userDocRef);
-          if (docSnap.exists()) {
-            const firestoreData = docSnap.data() as AppData;
-            // Ensure data integrity, especially for older data structures
-            firestoreData.goalSettings = firestoreData.goalSettings || getDefaultGoalSettings();
-            if (firestoreData.goalSettings.goals.length !== GOAL_CATEGORIES.length) {
-                firestoreData.goalSettings = getDefaultGoalSettings();
-            } else {
-                const currentCategoryIds = new Set(firestoreData.goalSettings.goals.map(g => g.categoryId));
-                const defaultGoals = getDefaultGoalSettings().goals;
-                for (const defaultGoal of defaultGoals) {
-                    if (!currentCategoryIds.has(defaultGoal.categoryId)) {
-                        const categoryInfo = GOAL_CATEGORIES.find(cat => cat.id === defaultGoal.categoryId);
-                        firestoreData.goalSettings.goals.push({
-                            categoryId: defaultGoal.categoryId,
-                            target: categoryInfo ? categoryInfo.defaultTarget : 0,
-                        });
-                    }
-                }
-            }
-            if (!firestoreData.goalSettings.period) {
-                firestoreData.goalSettings.period = getDefaultGoalSettings().period;
-            }
-            firestoreData.solvedProblems = (firestoreData.solvedProblems || []).map(p => ({
-              ...p,
-              isForReview: p.isForReview ?? false,
-            }));
-            setAppData(firestoreData);
+      setIsLoadingFirestore(true);
+      const userDocRef = doc(db, 'users', HARDCODED_USER_ID);
+      try {
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+          const firestoreData = docSnap.data() as AppData;
+          firestoreData.goalSettings = firestoreData.goalSettings || getDefaultGoalSettings();
+          if (firestoreData.goalSettings.goals.length !== GOAL_CATEGORIES.length) {
+              firestoreData.goalSettings = getDefaultGoalSettings();
           } else {
-            // New user, create default data in Firestore
-            const defaultData = getDefaultAppData();
-            await setDoc(userDocRef, defaultData);
-            setAppData(defaultData);
+              const currentCategoryIds = new Set(firestoreData.goalSettings.goals.map(g => g.categoryId));
+              const defaultGoals = getDefaultGoalSettings().goals;
+              for (const defaultGoal of defaultGoals) {
+                  if (!currentCategoryIds.has(defaultGoal.categoryId)) {
+                      const categoryInfo = GOAL_CATEGORIES.find(cat => cat.id === defaultGoal.categoryId);
+                      firestoreData.goalSettings.goals.push({
+                          categoryId: defaultGoal.categoryId,
+                          target: categoryInfo ? categoryInfo.defaultTarget : 0,
+                      });
+                  }
+              }
           }
-        } catch (error) {
-          console.error("Failed to load or initialize data from Firestore:", error);
-          setAppData(getDefaultAppData()); // Fallback to default if error
-        } finally {
-          setIsInitialized(true);
-          setIsLoadingFirestore(false);
+          if (!firestoreData.goalSettings.period) {
+              firestoreData.goalSettings.period = getDefaultGoalSettings().period;
+          }
+          firestoreData.solvedProblems = (firestoreData.solvedProblems || []).map(p => ({
+            ...p,
+            isForReview: p.isForReview ?? false,
+          }));
+          setAppData(firestoreData);
+        } else {
+          const defaultData = getDefaultAppData();
+          await setDoc(userDocRef, defaultData);
+          setAppData(defaultData);
         }
-      } else {
-        // No user, reset to default and mark as not initialized for Firestore
+      } catch (error) {
+        console.error("Failed to load or initialize data from Firestore:", error);
         setAppData(getDefaultAppData());
-        setIsInitialized(false); 
+      } finally {
+        setIsInitialized(true);
         setIsLoadingFirestore(false);
       }
     }
     loadData();
-  }, [currentUser]);
+  }, []); // Run once on mount
 
   const addSolvedProblem = useCallback(async (problem: Omit<SolvedProblem, 'id'>) => {
-    if (!currentUser) return;
     const newProblem: SolvedProblem = { ...problem, id: crypto.randomUUID(), isForReview: problem.isForReview ?? false };
     
     setAppData(prev => ({
@@ -94,20 +84,16 @@ export function useAppData() {
     }));
 
     try {
-      const userDocRef = doc(db, 'users', currentUser.uid);
+      const userDocRef = doc(db, 'users', HARDCODED_USER_ID);
       await updateDoc(userDocRef, {
         solvedProblems: arrayUnion(newProblem)
       });
     } catch (error) {
       console.error("Failed to add problem to Firestore:", error);
-      // Optionally revert local state or show error to user
     }
-  }, [currentUser]);
+  }, []);
 
   const updateSolvedProblem = useCallback(async (updatedProblem: SolvedProblem) => {
-    if (!currentUser) return;
-    
-    // Optimistic update locally
     const oldProblems = appData.solvedProblems;
     setAppData(prev => ({
       ...prev,
@@ -115,7 +101,7 @@ export function useAppData() {
     }));
 
     try {
-      const userDocRef = doc(db, 'users', currentUser.uid);
+      const userDocRef = doc(db, 'users', HARDCODED_USER_ID);
       const docSnap = await getDoc(userDocRef);
       if (docSnap.exists()) {
         const currentProblems = (docSnap.data().solvedProblems || []) as SolvedProblem[];
@@ -127,13 +113,11 @@ export function useAppData() {
       }
     } catch (error) {
       console.error("Failed to update problem in Firestore:", error);
-      setAppData(prev => ({...prev, solvedProblems: oldProblems })); // Revert optimistic update
+      setAppData(prev => ({...prev, solvedProblems: oldProblems }));
     }
-  }, [currentUser, appData.solvedProblems]);
+  }, [appData.solvedProblems]);
   
   const removeSolvedProblem = useCallback(async (problemId: string) => {
-    if (!currentUser) return;
-
     const problemToRemove = appData.solvedProblems.find(p => p.id === problemId);
     if (!problemToRemove) return;
 
@@ -143,23 +127,16 @@ export function useAppData() {
     }));
 
     try {
-      const userDocRef = doc(db, 'users', currentUser.uid);
-      // Firestore's arrayRemove requires the exact object to remove.
-      // If objects might differ slightly (e.g. due to non-serializable fields if any),
-      // it's safer to read, filter, and write back the array.
-      // For this case, assuming `problemToRemove` is the same as in Firestore if found.
+      const userDocRef = doc(db, 'users', HARDCODED_USER_ID);
       await updateDoc(userDocRef, {
         solvedProblems: arrayRemove(problemToRemove)
       });
     } catch (error) {
       console.error("Failed to remove problem from Firestore:", error);
-      // Optionally revert local state
     }
-  }, [currentUser, appData.solvedProblems]);
+  }, [appData.solvedProblems]);
 
   const updateGoalSettings = useCallback(async (newGoalSettings: GoalSettings) => {
-    if (!currentUser) return;
-    
     const fullNewSettings = {
       period: newGoalSettings.period,
       goals: newGoalSettings.goals.map(goal => ({
@@ -174,37 +151,32 @@ export function useAppData() {
     }));
     
     try {
-      const userDocRef = doc(db, 'users', currentUser.uid);
+      const userDocRef = doc(db, 'users', HARDCODED_USER_ID);
       await updateDoc(userDocRef, {
         goalSettings: fullNewSettings
       });
     } catch (error) {
       console.error("Failed to update goal settings in Firestore:", error);
     }
-  }, [currentUser]);
+  }, []);
   
   const updateSingleGoal = useCallback(async (updatedGoal: Goal) => {
-    if (!currentUser) return;
     setAppData(prev => {
       const newGoals = prev.goalSettings.goals.map(g => 
         g.categoryId === updatedGoal.categoryId ? updatedGoal : g
       );
       const newGoalSettings = { ...prev.goalSettings, goals: newGoals };
       
-      // Update Firestore
-      const userDocRef = doc(db, 'users', currentUser.uid);
+      const userDocRef = doc(db, 'users', HARDCODED_USER_ID);
       updateDoc(userDocRef, { goalSettings: newGoalSettings }).catch(err => {
         console.error("Failed to update single goal in Firestore:", err);
-        // Optionally revert local state
       });
       
       return { ...prev, goalSettings: newGoalSettings };
     });
-  }, [currentUser]);
+  }, []);
 
   const toggleProblemReviewStatus = useCallback(async (problemId: string) => {
-    if (!currentUser) return;
-
     const oldProblems = appData.solvedProblems;
     let newProblemsState: SolvedProblem[] = [];
 
@@ -219,9 +191,7 @@ export function useAppData() {
     });
 
     try {
-      const userDocRef = doc(db, 'users', currentUser.uid);
-      // To update a specific item in an array in Firestore, you typically need to read the array,
-      // modify it, and then write the entire array back.
+      const userDocRef = doc(db, 'users', HARDCODED_USER_ID);
       const docSnap = await getDoc(userDocRef);
       if (docSnap.exists()) {
         const firestoreProblems = (docSnap.data().solvedProblems || []) as SolvedProblem[];
@@ -232,15 +202,15 @@ export function useAppData() {
       }
     } catch (error) {
       console.error("Failed to toggle review status in Firestore:", error);
-      setAppData(prev => ({...prev, solvedProblems: oldProblems })); // Revert optimistic update
+      setAppData(prev => ({...prev, solvedProblems: oldProblems }));
     }
-  }, [currentUser, appData.solvedProblems]);
+  }, [appData.solvedProblems]);
 
 
   return {
     appData,
-    isInitialized, // This now means Firestore data for the user is loaded/initialized
-    isLoading: isLoadingFirestore || (currentUser && !isInitialized), // Overall loading state
+    isInitialized,
+    isLoading: isLoadingFirestore || !isInitialized, 
     addSolvedProblem,
     updateSolvedProblem,
     removeSolvedProblem,

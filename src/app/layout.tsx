@@ -2,7 +2,7 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from '@/context/auth-context'; // Import AuthProvider
+// Removed: import { AuthProvider } from '@/context/auth-context'; 
 
 export const metadata: Metadata = {
   title: 'Algo Grind - Track Your DSA Consistency',
@@ -23,10 +23,10 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased min-h-screen flex flex-col">
-        <AuthProvider> {/* Wrap children with AuthProvider */}
+        {/* Removed: <AuthProvider> */}
           {children}
           <Toaster />
-        </AuthProvider>
+        {/* Removed: </AuthProvider> */}
       </body>
     </html>
   );

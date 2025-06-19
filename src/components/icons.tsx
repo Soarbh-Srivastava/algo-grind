@@ -30,7 +30,7 @@ import {
   Bot,
   Bookmark,
   User, 
-  LogOut 
+  // LogOut // Removed LogOut
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import type { ProblemType } from '@/types';
@@ -63,7 +63,7 @@ export const Icons = {
   ChevronUp: (props: LucideProps) => <ChevronUp {...props} />,
   Bookmark: (props: LucideProps) => <Bookmark {...props} />,
   User: (props: LucideProps) => <User {...props} />,
-  LogOut: (props: LucideProps) => <LogOut {...props} />,
+  // LogOut: (props: LucideProps) => <LogOut {...props} />, // Removed LogOut icon
   Logo: (props: LucideProps) => ( 
     <svg 
       xmlns="http://www.w3.org/2000/svg" 
@@ -80,19 +80,7 @@ export const Icons = {
       <path d="M2 12l10 5 10-5"/>
     </svg>
   ),
-  Google: (props: LucideProps) => (
-    <svg 
-      role="img"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="currentColor" // Changed to currentColor to respect parent color
-      {...props}
-    >
-      <path
-        d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.05 1.05-2.36 1.84-4.06 1.84-4.81 0-8.73-3.82-8.73-8.55 0-4.73 3.92-8.55 8.73-8.55 2.66 0 4.28 1.08 5.51 2.24l2.09-2.09C18.42 1.51 15.96 0 12.48 0 5.88 0 .02 5.67.02 12.48s5.86 12.48 12.46 12.48c3.34 0 5.76-1.05 7.64-2.92 1.95-1.95 2.62-4.59 2.62-7.79 0-.85-.09-1.39-.18-1.92H12.48z"
-      />
-    </svg>
-  ),
+  // Removed Google Icon
 };
 
 export function getIconForProblemType(type: ProblemType, props?: LucideProps) {

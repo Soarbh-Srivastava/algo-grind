@@ -2,8 +2,8 @@
 "use client";
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/auth-context';
+// Removed: import { useRouter } from 'next/navigation';
+// Removed: import { useAuth } from '@/context/auth-context';
 import { AppHeader } from '@/components/layout/header';
 import { ProblemForm } from '@/components/problem-form';
 import { GoalSetter } from '@/components/goal-setter';
@@ -15,12 +15,12 @@ import { Icons } from '@/components/icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function HomePage() {
-  const { currentUser, loading: authLoading } = useAuth();
-  const router = useRouter();
+  // Removed: const { currentUser, loading: authLoading } = useAuth();
+  // Removed: const router = useRouter();
   const {
     appData,
-    isInitialized: dataInitialized, // Renamed from isInitialized to avoid clash
-    isLoading: dataLoading, // Loading state from useAppData
+    isInitialized: dataInitialized,
+    isLoading: dataLoading, 
     addSolvedProblem,
     updateSolvedProblem,
     removeSolvedProblem,
@@ -28,14 +28,9 @@ export default function HomePage() {
     toggleProblemReviewStatus,
   } = useAppData();
 
-  React.useEffect(() => {
-    if (!authLoading && !currentUser) {
-      router.push('/login');
-    }
-  }, [currentUser, authLoading, router]);
+  // Removed: React.useEffect for auth check and redirect
 
-  // Combined loading state
-  const isLoading = authLoading || dataLoading || (currentUser && !dataInitialized);
+  const isLoading = dataLoading || !dataInitialized;
 
   if (isLoading) {
     return (
@@ -45,14 +40,7 @@ export default function HomePage() {
     );
   }
 
-  if (!currentUser) {
-    // This case should ideally be covered by the redirect, but as a fallback
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <p>Redirecting to login...</p>
-      </div>
-    );
-  }
+  // Removed: if (!currentUser) block
   
   return (
     <div className="flex flex-col min-h-screen bg-background">
