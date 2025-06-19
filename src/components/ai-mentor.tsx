@@ -22,7 +22,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ScrollArea } from "@/components/ui/scroll-area";
+// ScrollArea is still used for chat, but not for recommendations list with this strategy
+// import { ScrollArea } from "@/components/ui/scroll-area"; 
 import { z } from 'zod';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
@@ -60,8 +61,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
 
   const handleGetRecommendations = async () => {
     setIsLoadingRecommendations(true);
-    // Do not clear recommendations immediately to avoid UI flash if new ones are empty
-
+    
     const aiSolvedProblems = solvedProblems
       .map(p => {
         const aiType = mapToAIProblemType(p.type);
@@ -74,21 +74,17 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
       })
       .filter(p => p !== null) as PersonalizedRecommendationsInput['solvedProblems'];
 
-
     if (aiSolvedProblems.length === 0 && solvedProblems.length > 0) {
        toast({
         variant: "destructive",
         title: "No Compatible Problems",
         description: "None of your solved problems have types recognized by the AI for recommendations. Log more problems with standard types.",
       });
-      if (recommendations.length > 0 || solvedProblems.length === 0) { // Clear only if there were recommendations or no problems to base on
-        setRecommendations([]);
-      }
       setIsLoadingRecommendations(false);
       return;
     }
      if (solvedProblems.length === 0 && aiSolvedProblems.length === 0) {
-        setRecommendations([]);
+        setRecommendations([]); 
      }
 
     const input: PersonalizedRecommendationsInput = {
@@ -105,7 +101,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
           description: "Your personalized problem suggestions are here.",
         });
       } else {
-        setRecommendations([]);
+        setRecommendations([]); 
         toast({
           title: "No Recommendations Yet",
           description: "The AI couldn't generate specific recommendations at this time. Try solving more diverse problems!",
@@ -118,9 +114,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         title: "AI Mentor Error",
         description: "Could not fetch recommendations. Please try again later.",
       });
-      if (recommendations.length > 0) {
-        setRecommendations([]);
-      }
+      setRecommendations([]);
     } finally {
       setIsLoadingRecommendations(false);
     }
@@ -181,14 +175,6 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
     setShowScrollButton(!atBottom && chatHistory.length > 0);
   };
 
-  const scrollToBottom = () => {
-    if(chatContainerRef.current) {
-       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-    setIsAtBottom(true);
-    setShowScrollButton(false);
-  };
-
   React.useEffect(() => {
     if (chatHistory.length === 0) {
       setIsAtBottom(true);
@@ -198,7 +184,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
 
 
   return (
-     <div className="flex flex-col space-y-6 max-h-[calc(100vh-170px)] sm:max-h-[calc(100vh-150px)] md:max-h-[calc(100vh-100px)] overflow-hidden">
+     <div className="flex flex-col space-y-6 max-h-[calc(100vh-100px)] overflow-hidden">
       
       <div className="flex-shrink-0 px-1">
         <div className="flex items-center space-x-2">
@@ -212,11 +198,11 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         </p>
       </div>
 
-      <Card className="flex-shrink-0 shadow-lg">
+      <Card className="shadow-lg flex-shrink-0 max-h-72 flex flex-col">
         <CardHeader className="flex-shrink-0">
           <CardTitle className="font-headline text-xl text-foreground">Problem Recommendations</CardTitle>
         </CardHeader>
-        <CardContent className="flex-shrink-0">
+        <CardContent className="flex-1 min-h-0 overflow-y-auto">
           {solvedProblems.length === 0 && !isLoadingRecommendations && recommendations.length === 0 && (
             <Alert variant="default" className="bg-accent/20 border-accent/50">
               <Lightbulb className="h-5 w-5 text-accent" />
@@ -226,7 +212,11 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
               </AlertDescription>
             </Alert>
           )}
-          <Button onClick={handleGetRecommendations} disabled={isLoadingRecommendations || solvedProblems.length === 0} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Button 
+            onClick={handleGetRecommendations} 
+            disabled={isLoadingRecommendations || solvedProblems.length === 0} 
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mb-4 flex-shrink-0"
+          >
             {isLoadingRecommendations ? (
               <>
                 <Icons.Logo className="mr-2 h-5 w-5 animate-spin" />
@@ -238,45 +228,41 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
           </Button>
 
           {recommendations.length > 0 && (
-            <div className="flex flex-col space-y-2 pt-2 flex-shrink-0">
+            <div className="space-y-2 pt-2">
                <h3 className="font-headline text-base text-foreground flex-shrink-0">Recommended Problems:</h3>
-               <div className="flex-1 min-h-0"> 
-                <ScrollArea className="max-h-36 rounded-md border p-1" type="auto"> 
-                  <Accordion type="single" collapsible className="w-full">
-                    {recommendations.map((rec, index) => (
-                      <AccordionItem value={rec.url} key={rec.url}>
-                        <AccordionTrigger className="hover:no-underline px-3">
-                          <div className="flex items-center space-x-3 text-left w-full">
-                            {getIconForProblemType(rec.problemType, { className: "h-5 w-5 text-primary shrink-0" })}
-                            <span className="flex-1 font-medium">{rec.problemName}</span>
-                            <Badge variant={
-                                rec.difficulty === 'easy' ? 'default' :
-                                rec.difficulty === 'medium' ? 'secondary' : 'destructive'
-                            } className={`
-                                ${rec.difficulty === 'easy' ? 'bg-green-500/20 text-green-700 border-green-500/30' :
-                                rec.difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' :
-                                'bg-red-500/20 text-red-700 border-red-500/30'}
-                                shrink-0
-                            `}>
-                              {rec.difficulty}
-                            </Badge>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-3 pb-3">
-                          <p className="text-sm text-muted-foreground mb-2">
-                            <strong className="text-foreground">Reason:</strong> {rec.reason}
-                          </p>
-                          <Button variant="outline" size="sm" asChild>
-                            <a href={rec.url} target="_blank" rel="noopener noreferrer">
-                              Go to Problem <ExternalLink className="ml-2 h-4 w-4" />
-                            </a>
-                          </Button>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                </ScrollArea>
-              </div>
+                <Accordion type="single" collapsible className="w-full">
+                  {recommendations.map((rec) => (
+                    <AccordionItem value={rec.url} key={rec.url}>
+                      <AccordionTrigger className="hover:no-underline px-3">
+                        <div className="flex items-center space-x-3 text-left w-full">
+                          {getIconForProblemType(rec.problemType, { className: "h-5 w-5 text-primary shrink-0" })}
+                          <span className="flex-1 font-medium">{rec.problemName}</span>
+                          <Badge variant={
+                              rec.difficulty === 'easy' ? 'default' :
+                              rec.difficulty === 'medium' ? 'secondary' : 'destructive'
+                          } className={`
+                              ${rec.difficulty === 'easy' ? 'bg-green-500/20 text-green-700 border-green-500/30' :
+                              rec.difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' :
+                              'bg-red-500/20 text-red-700 border-red-500/30'}
+                              shrink-0
+                          `}>
+                            {rec.difficulty}
+                          </Badge>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-3 pb-3">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          <strong className="text-foreground">Reason:</strong> {rec.reason}
+                        </p>
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={rec.url} target="_blank" rel="noopener noreferrer">
+                            Go to Problem <ExternalLink className="ml-2 h-4 w-4" />
+                          </a>
+                        </Button>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
             </div>
           )}
         </CardContent>
