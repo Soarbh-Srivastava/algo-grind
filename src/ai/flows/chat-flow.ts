@@ -4,30 +4,13 @@
  * @fileOverview Provides a chat interface with the AI mentor.
  *
  * - chatWithMentor - A function to send a message to the AI mentor and get a response.
- * - ChatMessage - The schema for a single chat message.
- * - ChatInput - The input type for the chatWithMentor function.
- * - ChatOutput - The return type for the chatWithMentor function.
+ * - ChatInput - The input type for the chatWithMentor function. (Imported from @/types)
+ * - ChatOutput - The return type for the chatWithMentor function. (Imported from @/types)
+ * - ChatMessage - The schema for a single chat message. (Imported from @/types)
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-export const ChatMessageSchema = z.object({
-  role: z.enum(['user', 'model']).describe("The role of the message sender, either 'user' or 'model' (AI)."),
-  content: z.string().describe("The content of the chat message."),
-});
-export type ChatMessage = z.infer<typeof ChatMessageSchema>;
-
-export const ChatInputSchema = z.object({
-  message: z.string().describe('The latest message from the user.'),
-  history: z.array(ChatMessageSchema).optional().describe('The conversation history up to this point.'),
-});
-export type ChatInput = z.infer<typeof ChatInputSchema>;
-
-export const ChatOutputSchema = z.object({
-  response: z.string().describe('The AI mentor\'s response message content.'),
-});
-export type ChatOutput = z.infer<typeof ChatOutputSchema>;
+import { ChatInputSchema, type ChatInput, ChatOutputSchema, type ChatOutput, type ChatMessage } from '@/types'; // Updated import
 
 export async function chatWithMentor(input: ChatInput): Promise<ChatOutput> {
   return chatWithMentorFlow(input);

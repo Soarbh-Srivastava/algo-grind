@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import type { SolvedProblem, Recommendation as RecommendationType, ProblemType as AppProblemType } from '@/types';
+import type { SolvedProblem, Recommendation as RecommendationType, ProblemType as AppProblemType, ChatInput, ChatOutput, ChatMessage } from '@/types'; // Updated import
 import { ProblemTypeEnum } from '@/types';
 import { getPersonalizedRecommendations, PersonalizedRecommendationsInput, PersonalizedRecommendationsOutput } from '@/ai/flows/personalized-recommendations';
-import { chatWithMentor, type ChatInput, type ChatOutput, type ChatMessage } from '@/ai/flows/chat-flow';
+import { chatWithMentor } from '@/ai/flows/chat-flow'; // Keep this for the function
 import { STRIVER_SHEET_URL } from '@/lib/constants';
 import { Icons, getIconForProblemType } from '@/components/icons';
 import { Badge } from "@/components/ui/badge";
@@ -353,4 +353,3 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     </Card>
   );
 }
-

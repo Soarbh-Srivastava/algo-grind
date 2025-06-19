@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const ProblemTypeEnum = z.enum([
@@ -54,3 +55,21 @@ export interface Recommendation {
   url: string;
   reason: string;
 }
+
+// Chat-related schemas and types
+export const ChatMessageSchema = z.object({
+  role: z.enum(['user', 'model']).describe("The role of the message sender, either 'user' or 'model' (AI)."),
+  content: z.string().describe("The content of the chat message."),
+});
+export type ChatMessage = z.infer<typeof ChatMessageSchema>;
+
+export const ChatInputSchema = z.object({
+  message: z.string().describe('The latest message from the user.'),
+  history: z.array(ChatMessageSchema).optional().describe('The conversation history up to this point.'),
+});
+export type ChatInput = z.infer<typeof ChatInputSchema>;
+
+export const ChatOutputSchema = z.object({
+  response: z.string().describe("The AI mentor's response message content."),
+});
+export type ChatOutput = z.infer<typeof ChatOutputSchema>;
