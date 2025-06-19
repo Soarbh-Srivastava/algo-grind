@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import type { SolvedProblem, Recommendation as RecommendationType, ProblemType as AppProblemType, ChatInput, ChatOutput, ChatMessage } from '@/types'; // Updated import
+import type { SolvedProblem, Recommendation as RecommendationType, ProblemType as AppProblemType, ChatInput, ChatOutput, ChatMessage } from '@/types';
 import { ProblemTypeEnum } from '@/types';
 import { getPersonalizedRecommendations, PersonalizedRecommendationsInput, PersonalizedRecommendationsOutput } from '@/ai/flows/personalized-recommendations';
-import { chatWithMentor } from '@/ai/flows/chat-flow'; // Keep this for the function
+import { chatWithMentor } from '@/ai/flows/chat-flow';
 import { STRIVER_SHEET_URL } from '@/lib/constants';
 import { Icons, getIconForProblemType } from '@/components/icons';
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +52,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
   const [chatInput, setChatInput] = React.useState('');
   const [chatHistory, setChatHistory] = React.useState<ChatMessage[]>([]);
   const [isChatting, setIsChatting] = React.useState(false);
-  const chatScrollAreaRef = React.useRef<HTMLDivElement>(null);
+  const lastMessageRef = React.useRef<HTMLDivElement>(null);
 
 
   const handleGetRecommendations = async () => {
@@ -124,8 +124,10 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     setChatInput(''); 
 
     try {
-      const currentHistoryForFlow = [...chatHistory, newMessage];
-      const input: ChatInput = { message: newMessage.content, history: currentHistoryForFlow.slice(0, -1) }; 
+      const currentHistoryForFlow = [...chatHistory, newMessage]; // Includes the new user message for context
+      // For the flow, history should be up to *before* the current user message
+      const flowHistory = currentHistoryForFlow.slice(0, -1);
+      const input: ChatInput = { message: newMessage.content, history: flowHistory }; 
       
       const result: ChatOutput = await chatWithMentor(input);
       const aiResponse: ChatMessage = { role: 'model', content: result.response };
@@ -145,16 +147,10 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
   };
   
   React.useEffect(() => {
-    if (chatScrollAreaRef.current) {
-      const viewportElement = chatScrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
-      if (viewportElement) {
-        requestAnimationFrame(() => {
-          viewportElement.scrollTo({
-            top: viewportElement.scrollHeight,
-            behavior: 'smooth',
-          });
-        });
-      }
+    if (lastMessageRef.current) {
+      requestAnimationFrame(() => {
+        lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      });
     }
   }, [chatHistory]);
 
@@ -239,11 +235,12 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
         <h3 className="font-headline text-xl text-foreground flex items-center">
           <BotIcon className="mr-2 h-6 w-6" /> Chat with Mentor
         </h3>
-        <ScrollArea className="flex-1 border rounded-md p-2 md:p-4 bg-muted/20 min-h-[200px]" ref={chatScrollAreaRef}>
+        <ScrollArea className="flex-1 border rounded-md p-2 md:p-4 bg-muted/20 min-h-[200px]">
           <div className="space-y-3 md:space-y-4">
             {chatHistory.map((msg, index) => (
               <div
                 key={index}
+                ref={index === chatHistory.length - 1 ? lastMessageRef : null}
                 className={cn(
                   "flex items-start space-x-2 md:space-x-3 w-full",
                   msg.role === 'user' ? "justify-end pl-6 md:pl-10" : "justify-start pr-6 md:pr-10"
@@ -265,9 +262,9 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                   <ReactMarkdown
                     className="prose prose-sm dark:prose-invert max-w-none prose-p:mb-1 prose-p:last:mb-0 prose-code:before:content-none prose-code:after:content-none prose-pre:p-0 prose-pre:bg-transparent"
                     components={{
-                       pre: ({ node, children, className: preClassName, ...props }) => {
-                          let lang = '';
+                       pre: ({node, children, className: preClassName, ...props }) => {
                           const codeChild = Array.isArray(children) && children[0] && typeof children[0] === 'object' && 'props' in children[0] ? children[0] as React.ReactElement : null;
+                          let lang = '';
                           if (codeChild && codeChild.props && typeof codeChild.props.className === 'string') {
                             const match = /language-(\w+)/.exec(codeChild.props.className);
                             if (match) {
@@ -297,6 +294,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                               </code>
                             );
                           }
+                          // For code block (not inline), children will be handled by the <pre> renderer wrapper
                           return (
                             <code className={cn("font-mono", className)} {...props}>
                               {children}
@@ -316,7 +314,10 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
               </div>
             ))}
              {isChatting && chatHistory[chatHistory.length -1]?.role === 'user' && (
-                <div className="flex items-start space-x-2 md:space-x-3 justify-start pr-6 md:pr-10">
+                <div 
+                  className="flex items-start space-x-2 md:space-x-3 justify-start pr-6 md:pr-10"
+                  ref={lastMessageRef} // Also apply ref here for scrolling while AI is typing
+                >
                     <Avatar className="h-7 w-7 md:h-8 md:w-8 shrink-0">
                         <AvatarFallback><BotIcon size={16} className="md:h-5 md:w-5"/></AvatarFallback>
                     </Avatar>
@@ -366,5 +367,3 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     </Card>
   );
 }
-
-    
