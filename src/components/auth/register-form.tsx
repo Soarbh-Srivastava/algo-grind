@@ -1,9 +1,9 @@
-
 // src/components/auth/register-form.tsx
 "use client";
 
 import * as React from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react'; // Updated import
+import { useFormStatus } from 'react-dom'; // useFormStatus remains in react-dom
 import { registerUser } from '@/app/register/actions';
 import type { FormState } from '@/app/login/actions'; // Re-use FormState
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ function SubmitButton() {
 
 export function RegisterForm() {
   const initialState: FormState = { message: '', type: '' };
-  const [state, formAction] = useFormState(registerUser, initialState);
+  const [state, formAction] = useActionState(registerUser, initialState); // Updated usage
 
   return (
     <form action={formAction} className="space-y-6">

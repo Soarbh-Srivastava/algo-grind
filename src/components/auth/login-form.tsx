@@ -1,9 +1,9 @@
-
 // src/components/auth/login-form.tsx
 "use client";
 
 import * as React from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react'; // Updated import
+import { useFormStatus } from 'react-dom'; // useFormStatus remains in react-dom
 import { loginUser, type FormState } from '@/app/login/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +23,7 @@ function SubmitButton() {
 
 export function LoginForm() {
   const initialState: FormState = { message: '', type: '' };
-  const [state, formAction] = useFormState(loginUser, initialState);
+  const [state, formAction] = useActionState(loginUser, initialState); // Updated usage
 
   return (
     <form action={formAction} className="space-y-6">
