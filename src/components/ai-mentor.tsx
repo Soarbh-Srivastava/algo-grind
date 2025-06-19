@@ -61,7 +61,6 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
   const handleGetRecommendations = async () => {
     setIsLoadingRecommendations(true);
     // Do not clear recommendations immediately to avoid UI flash if new ones are empty
-    // setRecommendations([]); 
 
     const aiSolvedProblems = solvedProblems
       .map(p => {
@@ -82,12 +81,14 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         title: "No Compatible Problems",
         description: "None of your solved problems have types recognized by the AI for recommendations. Log more problems with standard types.",
       });
-      setRecommendations([]); 
+      if (recommendations.length > 0 || solvedProblems.length === 0) { // Clear only if there were recommendations or no problems to base on
+        setRecommendations([]);
+      }
       setIsLoadingRecommendations(false);
       return;
     }
      if (solvedProblems.length === 0 && aiSolvedProblems.length === 0) {
-        setRecommendations([]); 
+        setRecommendations([]);
      }
 
     const input: PersonalizedRecommendationsInput = {
@@ -104,9 +105,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
           description: "Your personalized problem suggestions are here.",
         });
       } else {
-        // If there were previous recommendations, this would clear them.
-        // If there were none, this has no visible effect but ensures state is clean.
-        setRecommendations([]); 
+        setRecommendations([]);
         toast({
           title: "No Recommendations Yet",
           description: "The AI couldn't generate specific recommendations at this time. Try solving more diverse problems!",
@@ -119,7 +118,6 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         title: "AI Mentor Error",
         description: "Could not fetch recommendations. Please try again later.",
       });
-      // Clear recommendations only if there was an error and previous ones existed
       if (recommendations.length > 0) {
         setRecommendations([]);
       }
@@ -133,14 +131,14 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
     setIsChatting(true);
     const newMessage: ChatMessage = { role: 'user', content: chatInput.trim() };
     
-    setIsAtBottom(true); // Assume user wants to see their new message and the response
+    setIsAtBottom(true); 
     setChatHistory(prev => [...prev, newMessage]);
     setChatInput('');
     
 
     try {
-      const currentHistoryForFlow = [...chatHistory, newMessage]; // Use the latest state for the flow
-      const flowHistory = currentHistoryForFlow.slice(0, -1); // History excludes the current message
+      const currentHistoryForFlow = [...chatHistory, newMessage]; 
+      const flowHistory = currentHistoryForFlow.slice(0, -1); 
       const input: ChatInput = { 
         message: newMessage.content, 
         history: flowHistory,
@@ -173,11 +171,10 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         });
       }, 100);
     }
-  }, [chatHistory.length, isAtBottom]); // Rerun when chatHistory length changes if user is at bottom
+  }, [chatHistory.length, isAtBottom]); 
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    // A small threshold helps account for fractional pixels or minor scroll inconsistencies
     const atBottom = scrollHeight - scrollTop - clientHeight < 50; 
     
     setIsAtBottom(atBottom);
@@ -193,7 +190,6 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
   };
 
   React.useEffect(() => {
-    // Reset scroll button state if chat history becomes empty
     if (chatHistory.length === 0) {
       setIsAtBottom(true);
       setShowScrollButton(false);
@@ -244,11 +240,11 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
           {recommendations.length > 0 && (
             <div className="flex flex-col space-y-2 pt-2 flex-shrink-0">
                <h3 className="font-headline text-base text-foreground flex-shrink-0">Recommended Problems:</h3>
-               <div className="flex-1 min-h-0"> {/* Wrapper for ScrollArea */}
+               <div className="flex-1 min-h-0"> 
                 <ScrollArea className="max-h-36 rounded-md border p-1" type="auto"> 
                   <Accordion type="single" collapsible className="w-full">
                     {recommendations.map((rec, index) => (
-                      <AccordionItem value={`item-${index}`} key={index}>
+                      <AccordionItem value={rec.url} key={rec.url}>
                         <AccordionTrigger className="hover:no-underline px-3">
                           <div className="flex items-center space-x-3 text-left w-full">
                             {getIconForProblemType(rec.problemType, { className: "h-5 w-5 text-primary shrink-0" })}
