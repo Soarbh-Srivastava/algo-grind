@@ -141,7 +141,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
       const result: ChatOutput = await chatWithMentor(input);
       const aiResponse: ChatMessage = { role: 'model', content: result.response };
       setChatHistory(prev => [...prev, aiResponse]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error chatting with mentor:", error);
       const errorMessage = "Sorry, I encountered an error. Please try again or rephrase your question.";
       toast({
@@ -285,7 +285,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
           <BotIcon className="mr-2 h-6 w-6" /> Chat with Mentor
         </h3>
         <ScrollArea
-          className="border rounded-md p-2 md:p-4 bg-muted/20 h-[300px] sm:h-[350px] md:h-[400px]"
+          className="border rounded-md p-2 md:p-4 bg-muted/20 flex-1"
           ref={chatContainerRef}
           onScrollCapture={handleScroll}
         >
@@ -439,3 +439,4 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
     </Card>
   );
 }
+
