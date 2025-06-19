@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -5,7 +6,7 @@ import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"; // Removed DialogDescription
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import type { SolvedProblem } from '@/types';
@@ -177,6 +178,9 @@ export function ProgressTracker({ solvedProblems, onUpdateProblem, onRemoveProbl
       {/* Edit Problem Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+                <DialogTitle>Edit Problem</DialogTitle>
+            </DialogHeader>
             {editingProblem && (
                 <ProblemForm 
                     existingProblem={editingProblem}
@@ -186,6 +190,7 @@ export function ProgressTracker({ solvedProblems, onUpdateProblem, onRemoveProbl
                         setEditingProblem(null);
                     }}
                     onAddProblem={() => {}} // Not used in edit mode
+                    isInDialog={true} // Indicate this form is in a dialog
                 />
             )}
         </DialogContent>
