@@ -1,52 +1,19 @@
-
 // src/components/auth/register-form.tsx
 "use client";
 
 import * as React from 'react';
-import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
-import { registerUser } from '@/app/register/actions';
-import type { FormState } from '@/app/login/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Icons } from '@/components/icons';
-import { useToast } from "@/hooks/use-toast"; // Import useToast
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={pending}>
-      {pending ? <Icons.Logo className="mr-2 h-5 w-5 animate-spin" /> : null}
-      {pending ? 'Creating Account...' : 'Create Account'}
-    </Button>
-  );
-}
 
 export function RegisterForm() {
-  const initialState: FormState = { message: '', type: '' };
-  const [state, formAction] = useActionState(registerUser, initialState);
-  const { toast } = useToast(); // Get toast function
-
-  React.useEffect(() => {
-    if (state.type === 'success' && state.message) {
-      toast({
-        title: "Registration Successful!",
-        description: state.message,
-        variant: "default", 
-      });
-    }
-    // Error messages are handled by the Alert component below
-  }, [state, toast]);
-
+  // Registration functionality has been removed.
   return (
-    <form action={formAction} className="space-y-6">
-      {state.type === 'error' && state.message && (
-        <Alert variant="destructive">
-          <AlertDescription>{state.message}</AlertDescription>
-        </Alert>
-      )}
+    <div className="space-y-6">
+       <Alert variant="destructive">
+        <AlertDescription>Registration functionality is currently disabled.</AlertDescription>
+      </Alert>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -54,7 +21,7 @@ export function RegisterForm() {
           name="email"
           type="email"
           placeholder="you@example.com"
-          required
+          disabled
           className="bg-muted/30"
         />
       </div>
@@ -65,7 +32,7 @@ export function RegisterForm() {
           name="password"
           type="password"
           placeholder="•••••••• (min. 6 characters)"
-          required
+          disabled
           className="bg-muted/30"
         />
       </div>
@@ -76,11 +43,13 @@ export function RegisterForm() {
           name="confirmPassword"
           type="password"
           placeholder="••••••••"
-          required
+          disabled
           className="bg-muted/30"
         />
       </div>
-      <SubmitButton />
-    </form>
+      <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled>
+        Create Account (Disabled)
+      </Button>
+    </div>
   );
 }
