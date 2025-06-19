@@ -60,7 +60,8 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
 
   const handleGetRecommendations = async () => {
     setIsLoadingRecommendations(true);
-    // setRecommendations([]); // Keep previous visible
+    // Do not clear recommendations immediately to avoid UI flash if new ones are empty
+    // setRecommendations([]); 
 
     const aiSolvedProblems = solvedProblems
       .map(p => {
@@ -103,7 +104,9 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
           description: "Your personalized problem suggestions are here.",
         });
       } else {
-        setRecommendations([]);
+        // If there were previous recommendations, this would clear them.
+        // If there were none, this has no visible effect but ensures state is clean.
+        setRecommendations([]); 
         toast({
           title: "No Recommendations Yet",
           description: "The AI couldn't generate specific recommendations at this time. Try solving more diverse problems!",
@@ -116,7 +119,8 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         title: "AI Mentor Error",
         description: "Could not fetch recommendations. Please try again later.",
       });
-      if (recommendations.length > 0) { // Only clear if there were previous recommendations
+      // Clear recommendations only if there was an error and previous ones existed
+      if (recommendations.length > 0) {
         setRecommendations([]);
       }
     } finally {
@@ -129,14 +133,14 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
     setIsChatting(true);
     const newMessage: ChatMessage = { role: 'user', content: chatInput.trim() };
     
-    setIsAtBottom(true);
+    setIsAtBottom(true); // Assume user wants to see their new message and the response
     setChatHistory(prev => [...prev, newMessage]);
     setChatInput('');
     
 
     try {
-      const currentHistoryForFlow = [...chatHistory, newMessage];
-      const flowHistory = currentHistoryForFlow.slice(0, -1);
+      const currentHistoryForFlow = [...chatHistory, newMessage]; // Use the latest state for the flow
+      const flowHistory = currentHistoryForFlow.slice(0, -1); // History excludes the current message
       const input: ChatInput = { 
         message: newMessage.content, 
         history: flowHistory,
@@ -160,7 +164,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
     }
   };
 
-  React.useEffect(() => {
+   React.useEffect(() => {
     if (lastMessageRef.current && isAtBottom) {
       setTimeout(() => { 
         lastMessageRef.current?.scrollIntoView({
@@ -169,10 +173,11 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         });
       }, 100);
     }
-  }, [chatHistory.length, isAtBottom]);
+  }, [chatHistory.length, isAtBottom]); // Rerun when chatHistory length changes if user is at bottom
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+    // A small threshold helps account for fractional pixels or minor scroll inconsistencies
     const atBottom = scrollHeight - scrollTop - clientHeight < 50; 
     
     setIsAtBottom(atBottom);
@@ -188,17 +193,18 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
   };
 
   React.useEffect(() => {
+    // Reset scroll button state if chat history becomes empty
     if (chatHistory.length === 0) {
       setIsAtBottom(true);
       setShowScrollButton(false);
     }
   }, [chatHistory.length]);
 
+
   return (
      <div className="flex flex-col space-y-6 max-h-[calc(100vh-170px)] sm:max-h-[calc(100vh-150px)] md:max-h-[calc(100vh-100px)] overflow-hidden">
       
-      {/* General AI Mentor Title Section */}
-      <div className="flex-shrink-0 px-1"> {/* Added px-1 for slight indent matching card content */}
+      <div className="flex-shrink-0 px-1">
         <div className="flex items-center space-x-2">
           <Icons.AIMentor className="h-7 w-7 text-primary" />
           <h2 className="font-headline text-2xl text-primary">
@@ -210,12 +216,11 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         </p>
       </div>
 
-      {/* Recommendations Card */}
       <Card className="flex-shrink-0 shadow-lg">
-        <CardHeader>
+        <CardHeader className="flex-shrink-0">
           <CardTitle className="font-headline text-xl text-foreground">Problem Recommendations</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="flex-shrink-0">
           {solvedProblems.length === 0 && !isLoadingRecommendations && recommendations.length === 0 && (
             <Alert variant="default" className="bg-accent/20 border-accent/50">
               <Lightbulb className="h-5 w-5 text-accent" />
@@ -238,47 +243,49 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
 
           {recommendations.length > 0 && (
             <div className="flex flex-col space-y-2 pt-2 flex-shrink-0">
-              <ScrollArea className="max-h-52 rounded-md border p-1" type="auto"> 
-                <Accordion type="single" collapsible className="w-full">
-                  {recommendations.map((rec, index) => (
-                    <AccordionItem value={`item-${index}`} key={index}>
-                      <AccordionTrigger className="hover:no-underline px-3">
-                        <div className="flex items-center space-x-3 text-left w-full">
-                          {getIconForProblemType(rec.problemType, { className: "h-5 w-5 text-primary shrink-0" })}
-                          <span className="flex-1 font-medium">{rec.problemName}</span>
-                          <Badge variant={
-                              rec.difficulty === 'easy' ? 'default' :
-                              rec.difficulty === 'medium' ? 'secondary' : 'destructive'
-                          } className={`
-                              ${rec.difficulty === 'easy' ? 'bg-green-500/20 text-green-700 border-green-500/30' :
-                              rec.difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' :
-                              'bg-red-500/20 text-red-700 border-red-500/30'}
-                              shrink-0
-                          `}>
-                            {rec.difficulty}
-                          </Badge>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-3 pb-3">
-                        <p className="text-sm text-muted-foreground mb-2">
-                          <strong className="text-foreground">Reason:</strong> {rec.reason}
-                        </p>
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={rec.url} target="_blank" rel="noopener noreferrer">
-                            Go to Problem <ExternalLink className="ml-2 h-4 w-4" />
-                          </a>
-                        </Button>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </ScrollArea>
+               <h3 className="font-headline text-base text-foreground flex-shrink-0">Recommended Problems:</h3>
+               <div className="flex-1 min-h-0"> {/* Wrapper for ScrollArea */}
+                <ScrollArea className="max-h-36 rounded-md border p-1" type="auto"> 
+                  <Accordion type="single" collapsible className="w-full">
+                    {recommendations.map((rec, index) => (
+                      <AccordionItem value={`item-${index}`} key={index}>
+                        <AccordionTrigger className="hover:no-underline px-3">
+                          <div className="flex items-center space-x-3 text-left w-full">
+                            {getIconForProblemType(rec.problemType, { className: "h-5 w-5 text-primary shrink-0" })}
+                            <span className="flex-1 font-medium">{rec.problemName}</span>
+                            <Badge variant={
+                                rec.difficulty === 'easy' ? 'default' :
+                                rec.difficulty === 'medium' ? 'secondary' : 'destructive'
+                            } className={`
+                                ${rec.difficulty === 'easy' ? 'bg-green-500/20 text-green-700 border-green-500/30' :
+                                rec.difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' :
+                                'bg-red-500/20 text-red-700 border-red-500/30'}
+                                shrink-0
+                            `}>
+                              {rec.difficulty}
+                            </Badge>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-3 pb-3">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            <strong className="text-foreground">Reason:</strong> {rec.reason}
+                          </p>
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={rec.url} target="_blank" rel="noopener noreferrer">
+                              Go to Problem <ExternalLink className="ml-2 h-4 w-4" />
+                            </a>
+                          </Button>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </ScrollArea>
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Chat Card */}
       <Card className="flex-1 flex flex-col min-h-0 overflow-hidden shadow-lg">
         <CardHeader className="flex-shrink-0">
           <CardTitle className="font-headline text-xl text-foreground flex items-center">
