@@ -1,13 +1,12 @@
-
 // src/hooks/use-app-data.ts
 import { useState, useEffect, useCallback } from 'react';
-import type { AppData, SolvedProblem, GoalSettings, Goal } from '@/types';
+import type { AppData, SolvedProblem, GoalSettings } from '@/types';
 import { GOAL_CATEGORIES } from '@/lib/constants';
-import { db } from '@/lib/firebase'; // Firebase integration
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, type DocumentReference, type DocumentData } from 'firebase/firestore';
+import { useAuth } from '@/context/auth-context'; // Import useAuth
 
-const FIRESTORE_COLLECTION_ID = 'appData'; // Collection to store app data
-const FIRESTORE_DOCUMENT_ID = 'defaultUserData'; // Document ID for the single user data
+const FIRESTORE_COLLECTION_ID = 'appData';
 
 const getDefaultGoalSettings = (): GoalSettings => ({
   period: 'daily',
@@ -23,13 +22,34 @@ const getDefaultAppData = (): AppData => ({
 });
 
 export function useAppData() {
+  const { currentUser, loading: authLoading } = useAuth(); // Get currentUser
   const [appData, setAppData] = useState<AppData>(getDefaultAppData());
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoadingStorage, setIsLoadingStorage] = useState(true);
-
-  const dataDocRef = doc(db, FIRESTORE_COLLECTION_ID, FIRESTORE_DOCUMENT_ID);
+  const [dataDocRef, setDataDocRef] = useState<DocumentReference<DocumentData> | null>(null);
 
   useEffect(() => {
+    if (currentUser && !authLoading) {
+      const docRef = doc(db, FIRESTORE_COLLECTION_ID, currentUser.uid);
+      setDataDocRef(docRef);
+    } else if (!currentUser && !authLoading) {
+      // User is not logged in, reset app data and stop loading.
+      setAppData(getDefaultAppData());
+      setIsInitialized(true);
+      setIsLoadingStorage(false);
+      setDataDocRef(null);
+    }
+  }, [currentUser, authLoading]);
+
+  useEffect(() => {
+    if (!dataDocRef || !currentUser) {
+      if (!authLoading) { // Only set loading to false if auth is also done loading
+        setIsLoadingStorage(false);
+        setIsInitialized(true); // Mark as initialized even if no user
+      }
+      return;
+    }
+
     async function loadData() {
       setIsLoadingStorage(true);
       try {
@@ -42,6 +62,7 @@ export function useAppData() {
               parsedData.goalSettings = getDefaultGoalSettings();
               shouldUpdateFirestore = true; 
           } else {
+              // Ensure all default categories are present
               const currentCategoryIds = new Set(parsedData.goalSettings.goals.map(g => g.categoryId));
               const defaultGoals = getDefaultGoalSettings().goals;
               let goalsModified = false;
@@ -55,6 +76,7 @@ export function useAppData() {
                       goalsModified = true;
                   }
               }
+              // Remove any goals for categories that no longer exist
               const originalLength = parsedData.goalSettings.goals.length;
               parsedData.goalSettings.goals = parsedData.goalSettings.goals.filter(g => 
                 GOAL_CATEGORIES.some(cat => cat.id === g.categoryId)
@@ -63,27 +85,29 @@ export function useAppData() {
                 goalsModified = true;
               }
 
+              // Final check if goal structure is completely off
               if (parsedData.goalSettings.goals.length !== GOAL_CATEGORIES.length && !goalsModified) {
-                parsedData.goalSettings = getDefaultGoalSettings();
+                // This could happen if categories were removed from constants, or data is very old
+                parsedData.goalSettings = getDefaultGoalSettings(); // Reset to default
                 goalsModified = true;
               }
               if (goalsModified) {
                 shouldUpdateFirestore = true;
               }
           }
-          if (!parsedData.goalSettings.period) {
+          if (!parsedData.goalSettings.period) { // Ensure period exists
               parsedData.goalSettings.period = getDefaultGoalSettings().period;
               shouldUpdateFirestore = true;
           }
 
           if (typeof parsedData.solvedProblems === 'undefined' || !Array.isArray(parsedData.solvedProblems)) {
-            console.warn("solvedProblems field is missing or not an array in Firestore. Initializing to empty array.");
-            parsedData.solvedProblems = [];
+            parsedData.solvedProblems = []; // Initialize if missing or not an array
             shouldUpdateFirestore = true;
           } else {
+             // Ensure all problems have an ID and isForReview
             parsedData.solvedProblems = parsedData.solvedProblems.map(p => ({
               ...p,
-              id: p.id || crypto.randomUUID(), // Ensure ID exists
+              id: p.id || crypto.randomUUID(), 
               isForReview: p.isForReview ?? false,
             }));
           }
@@ -93,14 +117,7 @@ export function useAppData() {
           if (shouldUpdateFirestore) {
             const updatePayload: Partial<AppData> = {};
             if (parsedData.goalSettings) updatePayload.goalSettings = parsedData.goalSettings;
-            // Only add/update solvedProblems if it was initially missing or malformed
-            if (typeof docSnap.data().solvedProblems === 'undefined' || !Array.isArray(docSnap.data().solvedProblems)) {
-                 updatePayload.solvedProblems = parsedData.solvedProblems; 
-            } else if (parsedData.solvedProblems.some(p => !docSnap.data().solvedProblems.find((dp: SolvedProblem) => dp.id === p.id && dp.isForReview === p.isForReview))) {
-              // If isForReview or id was added to any existing problem, update the whole array
-              updatePayload.solvedProblems = parsedData.solvedProblems;
-            }
-
+            if (parsedData.solvedProblems) updatePayload.solvedProblems = parsedData.solvedProblems; // Always update if modified
 
             if (Object.keys(updatePayload).length > 0) {
                  await updateDoc(dataDocRef, updatePayload);
@@ -108,41 +125,37 @@ export function useAppData() {
           }
 
         } else {
+          // Document doesn't exist, create it with default data
           const defaultData = getDefaultAppData();
           await setDoc(dataDocRef, defaultData);
           setAppData(defaultData);
         }
       } catch (error: any) {
         console.error("Failed to load or initialize data from Firestore:", error);
-        if (error.code === 'permission-denied' || 
-            (error.message && error.message.toLowerCase().includes("permission denied")) || 
-            (error.message && error.message.toLowerCase().includes("insufficient permissions")) ||
-            (error.message && error.message.toLowerCase().includes("missing or insufficient permissions"))) {
+         if (error.code === 'permission-denied' || (error.message && error.message.toLowerCase().includes("permission denied")) || (error.message && error.message.toLowerCase().includes("insufficient permissions"))) {
           console.error(
-            "CRITICAL: Firestore Permission Denied. Ensure your Firestore security rules allow read/write access " +
-            `to the '${FIRESTORE_COLLECTION_ID}/${FIRESTORE_DOCUMENT_ID}' document. Example rules:\n` +
+            "CRITICAL: Firestore Permission Denied. For multi-user setup, ensure your Firestore security rules are: \n" +
             "rules_version = '2';\n" +
             "service cloud.firestore {\n" +
             "  match /databases/{database}/documents {\n" +
-            `    match /${FIRESTORE_COLLECTION_ID}/${FIRESTORE_DOCUMENT_ID} {\n` +
-            "      allow read, write: if true;\n" +
+            `    match /${FIRESTORE_COLLECTION_ID}/{userId} {\n` +
+            "      allow read, write: if request.auth != null && request.auth.uid == userId;\n" +
             "    }\n" +
-            "    // Consider adding: match /{document=**} { allow read, write: if false; } to secure other paths.\n" +
             "  }\n" +
             "}"
           );
         }
-        setAppData(getDefaultAppData());
+        setAppData(getDefaultAppData()); // Fallback to default local state on error
       } finally {
         setIsInitialized(true);
         setIsLoadingStorage(false);
       }
     }
     loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); 
+  }, [dataDocRef, currentUser, authLoading]); 
 
   const addSolvedProblem = useCallback(async (problem: Omit<SolvedProblem, 'id'>) => {
+    if (!dataDocRef || !currentUser) return; // Do nothing if not logged in or docRef not set
     const newProblem: SolvedProblem = { ...problem, id: crypto.randomUUID(), isForReview: problem.isForReview ?? false };
     try {
       await updateDoc(dataDocRef, {
@@ -155,14 +168,15 @@ export function useAppData() {
     } catch (error) {
       console.error("Failed to add problem to Firestore:", error);
     }
-  }, [dataDocRef]);
+  }, [dataDocRef, currentUser]);
 
   const updateSolvedProblem = useCallback(async (updatedProblem: SolvedProblem) => {
+    if (!dataDocRef || !currentUser) return;
     try {
-      const currentDoc = await getDoc(dataDocRef);
-      if (currentDoc.exists()) {
-        const currentData = currentDoc.data() as AppData;
-        const updatedProblems = currentData.solvedProblems.map(p => 
+      const currentDocSnap = await getDoc(dataDocRef); // Fetch fresh doc
+      if (currentDocSnap.exists()) {
+        const currentData = currentDocSnap.data() as AppData;
+        const updatedProblems = (currentData.solvedProblems || []).map(p => 
           p.id === updatedProblem.id ? {...updatedProblem, isForReview: updatedProblem.isForReview ?? false } : p
         );
         await updateDoc(dataDocRef, { solvedProblems: updatedProblems });
@@ -174,14 +188,15 @@ export function useAppData() {
     } catch (error) {
       console.error("Failed to update problem in Firestore:", error);
     }
-  }, [dataDocRef]);
+  }, [dataDocRef, currentUser]);
   
   const removeSolvedProblem = useCallback(async (problemId: string) => {
+    if (!dataDocRef || !currentUser) return;
     try {
-      const currentDoc = await getDoc(dataDocRef);
-      if (currentDoc.exists()) {
-        const currentData = currentDoc.data() as AppData;
-        const problemToRemove = currentData.solvedProblems.find(p => p.id === problemId);
+      const currentDocSnap = await getDoc(dataDocRef); // Fetch fresh doc
+      if (currentDocSnap.exists()) {
+        const currentData = currentDocSnap.data() as AppData;
+        const problemToRemove = (currentData.solvedProblems || []).find(p => p.id === problemId);
         if (problemToRemove) {
           await updateDoc(dataDocRef, {
             solvedProblems: arrayRemove(problemToRemove)
@@ -195,9 +210,10 @@ export function useAppData() {
     } catch (error) {
       console.error("Failed to remove problem from Firestore:", error);
     }
-  }, [dataDocRef]);
+  }, [dataDocRef, currentUser]);
 
   const updateGoalSettings = useCallback(async (settings: GoalSettings) => {
+    if (!dataDocRef || !currentUser) return;
     try {
       await updateDoc(dataDocRef, {
         goalSettings: settings
@@ -209,14 +225,15 @@ export function useAppData() {
     } catch (error) {
       console.error("Failed to update goal settings in Firestore:", error);
     }
-  }, [dataDocRef]);
+  }, [dataDocRef, currentUser]);
 
   const toggleProblemReviewStatus = useCallback(async (problemId: string) => {
+    if (!dataDocRef || !currentUser) return;
     try {
-      const currentDoc = await getDoc(dataDocRef);
-      if (currentDoc.exists()) {
-        const currentData = currentDoc.data() as AppData;
-        const updatedProblems = currentData.solvedProblems.map(p =>
+      const currentDocSnap = await getDoc(dataDocRef); // Fetch fresh doc
+      if (currentDocSnap.exists()) {
+        const currentData = currentDocSnap.data() as AppData;
+        const updatedProblems = (currentData.solvedProblems || []).map(p =>
           p.id === problemId ? { ...p, isForReview: !(p.isForReview ?? false) } : p
         );
         await updateDoc(dataDocRef, { solvedProblems: updatedProblems });
@@ -228,12 +245,12 @@ export function useAppData() {
     } catch (error) {
       console.error("Failed to toggle review status in Firestore:", error);
     }
-  }, [dataDocRef]);
+  }, [dataDocRef, currentUser]);
 
   return {
     appData,
-    isInitialized,
-    isLoading: isLoadingStorage,
+    isInitialized, // is data loading attempted (even if user is null)
+    isLoading: authLoading || isLoadingStorage, // True if auth is loading OR storage is loading
     addSolvedProblem,
     updateSolvedProblem,
     removeSolvedProblem,

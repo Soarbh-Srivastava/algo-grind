@@ -2,8 +2,8 @@
 "use client";
 
 import * as React from 'react';
-// Removed: import { useRouter } from 'next/navigation';
-// Removed: import { useAuth } from '@/context/auth-context';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/auth-context';
 import { AppHeader } from '@/components/layout/header';
 import { ProblemForm } from '@/components/problem-form';
 import { GoalSetter } from '@/components/goal-setter';
@@ -15,11 +15,11 @@ import { Icons } from '@/components/icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function HomePage() {
-  // Removed: const { currentUser, loading: authLoading } = useAuth();
-  // Removed: const router = useRouter();
+  const { currentUser, loading: authLoading } = useAuth();
+  const router = useRouter();
   const {
     appData,
-    isInitialized: dataInitialized,
+    isInitialized: dataInitialized, // Renamed from isInitialized to avoid conflict
     isLoading: dataLoading, 
     addSolvedProblem,
     updateSolvedProblem,
@@ -28,19 +28,32 @@ export default function HomePage() {
     toggleProblemReviewStatus,
   } = useAppData();
 
-  // Removed: React.useEffect for auth check and redirect
+  React.useEffect(() => {
+    if (!authLoading && !currentUser) {
+      router.push('/login');
+    }
+  }, [currentUser, authLoading, router]);
 
-  const isLoading = dataLoading || !dataInitialized;
+  // Combined loading state
+  const isLoading = authLoading || dataLoading || !dataInitialized;
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Icons.Logo className="h-16 w-16 animate-spin text-primary" />
+        <p className="ml-4 text-lg">Loading Algo Grind...</p>
       </div>
     );
   }
 
-  // Removed: if (!currentUser) block
+  if (!currentUser) {
+    // This case should ideally be handled by the redirect, but as a fallback:
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <p>Redirecting to login...</p>
+      </div>
+    );
+  }
   
   return (
     <div className="flex flex-col min-h-screen bg-background">

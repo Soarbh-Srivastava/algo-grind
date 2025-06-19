@@ -1,6 +1,7 @@
 // src/lib/firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getFirestore, type Firestore } from "firebase/firestore";
+import { getAuth, type Auth } from "firebase/auth"; // Added Auth import
 
 // Firebase configuration using environment variables
 const firebaseConfig = {
@@ -15,6 +16,7 @@ const firebaseConfig = {
 
 let app: FirebaseApp;
 let db: Firestore;
+let auth: Auth; // Added Auth instance
 
 if (!getApps().length) {
   if (
@@ -26,8 +28,6 @@ if (!getApps().length) {
     !firebaseConfig.appId
   ) {
     console.error("Firebase configuration is missing. Make sure all NEXT_PUBLIC_FIREBASE_ environment variables are set in your .env file.");
-    // Potentially throw an error or handle this state appropriately
-    // For now, we'll proceed, but Firebase initialization will likely fail or be incomplete.
   }
   app = initializeApp(firebaseConfig);
 } else {
@@ -35,5 +35,6 @@ if (!getApps().length) {
 }
 
 db = getFirestore(app);
+auth = getAuth(app); // Initialize Auth
 
-export { app, db };
+export { app, db, auth }; // Export auth

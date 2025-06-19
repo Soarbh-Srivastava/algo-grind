@@ -2,18 +2,37 @@
 "use client";
 
 import * as React from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { registerUser, type FormState } from '@/app/register/actions';
+import { Icons } from '@/components/icons'; // For loading spinner
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={pending}>
+      {pending ? <Icons.Logo className="mr-2 h-4 w-4 animate-spin" /> : null}
+      Create Account
+    </Button>
+  );
+}
 
 export function RegisterForm() {
-  // Registration functionality has been removed.
+  const initialState: FormState = { message: "", type: "" };
+  const [state, formAction] = useFormState(registerUser, initialState);
+
   return (
-    <div className="space-y-6">
-       <Alert variant="destructive">
-        <AlertDescription>Registration functionality is currently disabled.</AlertDescription>
-      </Alert>
+    <form action={formAction} className="space-y-6">
+       {state.message && state.type === "error" && (
+        <Alert variant="destructive">
+          <AlertTitle>Registration Failed</AlertTitle>
+          <AlertDescription>{state.message}</AlertDescription>
+        </Alert>
+      )}
+      {/* Success message could be handled here too, but redirection usually takes precedence */}
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -21,8 +40,8 @@ export function RegisterForm() {
           name="email"
           type="email"
           placeholder="you@example.com"
-          disabled
-          className="bg-muted/30"
+          required
+          autoComplete="email"
         />
       </div>
       <div className="space-y-2">
@@ -32,8 +51,9 @@ export function RegisterForm() {
           name="password"
           type="password"
           placeholder="•••••••• (min. 6 characters)"
-          disabled
-          className="bg-muted/30"
+          required
+          minLength={6}
+          autoComplete="new-password"
         />
       </div>
       <div className="space-y-2">
@@ -43,13 +63,12 @@ export function RegisterForm() {
           name="confirmPassword"
           type="password"
           placeholder="••••••••"
-          disabled
-          className="bg-muted/30"
+          required
+          minLength={6}
+          autoComplete="new-password"
         />
       </div>
-      <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled>
-        Create Account (Disabled)
-      </Button>
-    </div>
+      <SubmitButton />
+    </form>
   );
 }

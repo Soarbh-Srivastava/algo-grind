@@ -2,12 +2,42 @@
 "use client";
 
 import * as React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { RegisterForm } from '@/components/auth/register-form';
+import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
+import { useAuth } from '@/context/auth-context';
+import { Separator } from '@/components/ui/separator';
+
 
 export default function RegisterPage() {
-  // Authentication functionality has been removed.
+  const { currentUser, signInWithGoogle, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!authLoading && currentUser) {
+      router.push('/'); // Redirect if already logged in
+    }
+  }, [currentUser, authLoading, router]);
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    await signInWithGoogle();
+    // Redirection is handled by AuthContext or useEffect above
+    setIsGoogleLoading(false);
+  };
+
+  if (authLoading || (!authLoading && currentUser)) {
+     return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+        <Icons.Logo className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4">Loading or redirecting...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
@@ -16,18 +46,42 @@ export default function RegisterPage() {
            <div className="mx-auto mb-4">
             <Icons.Logo className="h-12 w-12 text-primary" />
           </div>
-          <CardTitle className="font-headline text-3xl text-primary">Create Account</CardTitle>
-          <CardDescription>Authentication has been disabled.</CardDescription>
+          <CardTitle className="font-headline text-3xl text-primary">Create Your Account</CardTitle>
+          <CardDescription>Join Algo Grind and start tracking your DSA progress.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-           <p className="text-center text-muted-foreground">
-            Registration functionality is not available.
-          </p>
+          <RegisterForm />
+           <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <Separator />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Or sign up with
+              </span>
+            </div>
+          </div>
+          <Button 
+            variant="outline" 
+            className="w-full" 
+            onClick={handleGoogleSignIn}
+            disabled={isGoogleLoading}
+          >
+            {isGoogleLoading ? (
+              <Icons.Logo className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Icons.Google className="mr-2 h-4 w-4" />
+            )}
+            Google
+          </Button>
         </CardContent>
-         <CardFooter className="flex justify-center">
-          <Link href="/" className="font-medium text-primary hover:underline">
-            Go to Homepage
-          </Link>
+         <CardFooter className="flex-col space-y-2 text-center">
+          <p className="text-sm text-muted-foreground">
+            Already have an account?{' '}
+            <Link href="/login" className="font-medium text-primary hover:underline">
+              Sign In
+            </Link>
+          </p>
         </CardFooter>
       </Card>
     </div>
