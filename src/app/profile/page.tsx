@@ -80,10 +80,6 @@ export default function ProfilePage() {
                     <h3 className="text-sm font-medium text-muted-foreground">Email</h3>
                     <p className="text-foreground">{currentUser.email}</p>
                 </div>
-                 <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">User ID</h3>
-                    <p className="text-xs text-muted-foreground">{currentUser.uid}</p>
-                </div>
                 <div>
                     <h3 className="text-sm font-medium text-muted-foreground">Last Sign In</h3>
                     <p className="text-foreground">{currentUser.metadata.lastSignInTime ? new Date(currentUser.metadata.lastSignInTime).toLocaleString() : 'N/A'}</p>
