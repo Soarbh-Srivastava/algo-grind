@@ -124,8 +124,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     setChatInput(''); 
 
     try {
-      const currentHistoryForFlow = [...chatHistory, newMessage]; // Includes the new user message for context
-      // For the flow, history should be up to *before* the current user message
+      const currentHistoryForFlow = [...chatHistory, newMessage]; 
       const flowHistory = currentHistoryForFlow.slice(0, -1);
       const input: ChatInput = { message: newMessage.content, history: flowHistory }; 
       
@@ -272,10 +271,10 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                             }
                           }
                           return (
-                            <div className="my-2 rounded-md border bg-card text-card-foreground relative text-[0.9em]">
+                            <div className="my-2 w-full rounded-md border bg-card text-card-foreground relative text-[0.9em]">
                               {lang && <div className="absolute top-1 right-2 text-xs text-muted-foreground select-none z-10">{lang}</div>}
                               <pre
-                                className={cn("p-3 pt-5 overflow-x-auto", preClassName)}
+                                className={cn("p-3 pt-5 overflow-x-auto whitespace-pre", preClassName)}
                                 {...props}
                               >
                                 {children}
@@ -288,13 +287,11 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                             return (
                               <code
                                 className={cn("bg-foreground/10 text-foreground px-1 py-0.5 rounded text-[0.9em] font-mono", className)}
-                                {...props}
                               >
                                 {children}
                               </code>
                             );
                           }
-                          // For code block (not inline), children will be handled by the <pre> renderer wrapper
                           return (
                             <code className={cn("font-mono", className)} {...props}>
                               {children}
@@ -316,7 +313,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
              {isChatting && chatHistory[chatHistory.length -1]?.role === 'user' && (
                 <div 
                   className="flex items-start space-x-2 md:space-x-3 justify-start pr-6 md:pr-10"
-                  ref={lastMessageRef} // Also apply ref here for scrolling while AI is typing
+                  ref={lastMessageRef} 
                 >
                     <Avatar className="h-7 w-7 md:h-8 md:w-8 shrink-0">
                         <AvatarFallback><BotIcon size={16} className="md:h-5 md:w-5"/></AvatarFallback>
