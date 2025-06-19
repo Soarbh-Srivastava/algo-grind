@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area'; // Still needed for Recommendations Accordion
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import type { SolvedProblem, Recommendation as RecommendationType, ProblemType as AppProblemType, ChatInput, ChatOutput, ChatMessage } from '@/types';
 import { ProblemTypeEnum } from '@/types';
@@ -61,7 +61,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
 
   const handleGetRecommendations = async () => {
     setIsLoadingRecommendations(true);
-    setRecommendations([]);
+    // setRecommendations([]); // Intentionally not clearing immediately to avoid UI flash if that's preferred
 
     const aiSolvedProblems = solvedProblems
       .map(p => {
@@ -82,9 +82,14 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         title: "No Compatible Problems",
         description: "None of your solved problems have types recognized by the AI for recommendations. Log more problems with standard types.",
       });
+      setRecommendations([]); // Clear if input is invalid
       setIsLoadingRecommendations(false);
       return;
     }
+     if (solvedProblems.length === 0 && aiSolvedProblems.length === 0) {
+        setRecommendations([]); // Clear if no problems to base on
+     }
+
 
     const input: PersonalizedRecommendationsInput = {
       solvedProblems: aiSolvedProblems,
@@ -124,14 +129,14 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
     setIsChatting(true);
     const newMessage: ChatMessage = { role: 'user', content: chatInput.trim() };
     
-    setIsAtBottom(true); // Assume we want to scroll after sending a message
+    setIsAtBottom(true);
     setChatHistory(prev => [...prev, newMessage]);
     setChatInput('');
     
 
     try {
-      const currentHistoryForFlow = [...chatHistory, newMessage]; // Includes the new user message for context
-      const flowHistory = currentHistoryForFlow.slice(0, -1); // History for flow is up to the last model message
+      const currentHistoryForFlow = [...chatHistory, newMessage];
+      const flowHistory = currentHistoryForFlow.slice(0, -1);
       const input: ChatInput = { 
         message: newMessage.content, 
         history: flowHistory,
@@ -155,7 +160,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
     }
   };
 
-  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+ const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
     const atBottom = scrollHeight - scrollTop - clientHeight < 50; // Threshold for being at bottom
     
@@ -164,9 +169,8 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
   };
 
   const scrollToBottom = () => {
-    if(lastMessageRef.current) {
-       // Using native scrollIntoView on the last message element
-       lastMessageRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    if(chatContainerRef.current) {
+       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
     setIsAtBottom(true);
     setShowScrollButton(false);
@@ -174,14 +178,14 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
 
   React.useEffect(() => {
     if (lastMessageRef.current && isAtBottom) {
-      setTimeout(() => { // Delay to ensure DOM update
+      setTimeout(() => { 
         lastMessageRef.current?.scrollIntoView({
           behavior: 'smooth',
           block: 'end'
         });
       }, 100);
     }
-  }, [chatHistory.length, isAtBottom]); // Rerun when message count changes or isAtBottom changes
+  }, [chatHistory.length, isAtBottom]);
 
 
   React.useEffect(() => {
@@ -193,7 +197,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
 
 
   return (
-    <Card className="shadow-lg flex flex-col max-h-[calc(100vh-220px)] sm:max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-150px)] overflow-hidden">
+     <Card className="shadow-lg flex flex-col max-h-[calc(100vh-220px)] sm:max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-150px)] overflow-hidden">
       <CardHeader>
         <CardTitle className="font-headline text-2xl text-primary flex items-center">
           <Icons.AIMentor className="mr-2 h-7 w-7" /> AI Mentor
@@ -203,8 +207,8 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-6"> {/* Recommendations section */}
-        {solvedProblems.length === 0 && !isLoadingRecommendations && (
+      <CardContent className="space-y-6">
+        {solvedProblems.length === 0 && !isLoadingRecommendations && recommendations.length === 0 && (
            <Alert variant="default" className="bg-accent/20 border-accent/50">
             <Lightbulb className="h-5 w-5 text-accent" />
             <AlertTitle className="font-headline text-accent">Log Your Progress First</AlertTitle>
@@ -225,55 +229,55 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         </Button>
 
         {recommendations.length > 0 && (
-          <div className="space-y-4 pt-4">
-            <h3 className="font-headline text-xl text-foreground">Recommended Problems:</h3>
-            <ScrollArea className="h-[250px] rounded-md border p-1"> {/* ScrollArea for recommendations */}
-              <Accordion type="single" collapsible className="w-full">
-                {recommendations.map((rec, index) => (
-                  <AccordionItem value={`item-${index}`} key={index}>
-                    <AccordionTrigger className="hover:no-underline px-3">
-                      <div className="flex items-center space-x-3 text-left w-full">
-                        {getIconForProblemType(rec.problemType, { className: "h-5 w-5 text-primary shrink-0" })}
-                        <span className="flex-1 font-medium">{rec.problemName}</span>
-                        <Badge variant={
-                            rec.difficulty === 'easy' ? 'default' :
-                            rec.difficulty === 'medium' ? 'secondary' : 'destructive'
-                          } className={`
-                            ${rec.difficulty === 'easy' ? 'bg-green-500/20 text-green-700 border-green-500/30' :
-                            rec.difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' :
-                            'bg-red-500/20 text-red-700 border-red-500/30'}
-                            shrink-0
-                          `}>
-                            {rec.difficulty}
-                        </Badge>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="px-3 pb-3">
-                      <p className="text-sm text-muted-foreground mb-2">
-                        <strong className="text-foreground">Reason:</strong> {rec.reason}
-                      </p>
-                      <Button variant="outline" size="sm" asChild>
-                        <a href={rec.url} target="_blank" rel="noopener noreferrer">
-                          Go to Problem <ExternalLink className="ml-2 h-4 w-4" />
-                        </a>
-                      </Button>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </ScrollArea>
+          <div className="flex flex-col space-y-4 pt-4 min-h-0">
+            <h3 className="font-headline text-xl text-foreground flex-shrink-0">Recommended Problems:</h3>
+            <div className="flex-1 min-h-0">
+                <ScrollArea className="h-full max-h-[250px] rounded-md border p-1" type="auto"> {/* Ensure max-h is also reasonable */}
+                <Accordion type="single" collapsible className="w-full">
+                    {recommendations.map((rec, index) => (
+                    <AccordionItem value={`item-${index}`} key={index}>
+                        <AccordionTrigger className="hover:no-underline px-3">
+                        <div className="flex items-center space-x-3 text-left w-full">
+                            {getIconForProblemType(rec.problemType, { className: "h-5 w-5 text-primary shrink-0" })}
+                            <span className="flex-1 font-medium">{rec.problemName}</span>
+                            <Badge variant={
+                                rec.difficulty === 'easy' ? 'default' :
+                                rec.difficulty === 'medium' ? 'secondary' : 'destructive'
+                            } className={`
+                                ${rec.difficulty === 'easy' ? 'bg-green-500/20 text-green-700 border-green-500/30' :
+                                rec.difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' :
+                                'bg-red-500/20 text-red-700 border-red-500/30'}
+                                shrink-0
+                            `}>
+                                {rec.difficulty}
+                            </Badge>
+                        </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-3 pb-3">
+                        <p className="text-sm text-muted-foreground mb-2">
+                            <strong className="text-foreground">Reason:</strong> {rec.reason}
+                        </p>
+                        <Button variant="outline" size="sm" asChild>
+                            <a href={rec.url} target="_blank" rel="noopener noreferrer">
+                            Go to Problem <ExternalLink className="ml-2 h-4 w-4" />
+                            </a>
+                        </Button>
+                        </AccordionContent>
+                    </AccordionItem>
+                    ))}
+                </Accordion>
+                </ScrollArea>
+            </div>
           </div>
         )}
       </CardContent>
 
       <Separator className="my-2 md:my-4" />
 
-      {/* Chat section wrapper */}
       <CardContent className="flex-1 flex flex-col space-y-2 md:space-y-4 overflow-hidden pt-0 min-h-0">
-        <h3 className="font-headline text-xl text-foreground flex items-center">
+        <h3 className="font-headline text-xl text-foreground flex items-center flex-shrink-0">
           <BotIcon className="mr-2 h-6 w-6" /> Chat with Mentor
         </h3>
-        {/* Chat messages area - Replaced ScrollArea with a div */}
         <div
           className="border rounded-md p-2 md:p-4 bg-muted/20 flex-1 min-h-0 overflow-y-auto"
           ref={chatContainerRef}
@@ -340,7 +344,6 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
                             </code>
                           );
                         }
-                        // This is for block code
                         return (
                           <code 
                             className={cn("font-mono", className)} 
@@ -395,8 +398,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
             )}
           </div>
         </div>
-        {/* Chat input section */}
-        <div className="flex items-center space-x-2 pt-1 md:pt-2">
+        <div className="flex items-center space-x-2 pt-1 md:pt-2 flex-shrink-0">
           <Textarea
             placeholder="Ask a question..."
             value={chatInput}
@@ -419,7 +421,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
       </CardContent>
 
       {STRIVER_SHEET_URL && (
-        <CardFooter className="mt-auto pt-2 md:pt-4 pb-2 md:pb-4">
+        <CardFooter className="mt-auto pt-2 md:pt-4 pb-2 md:pb-4 flex-shrink-0">
             <Button variant="link" asChild className="text-xs md:text-sm text-muted-foreground p-0 h-auto">
                 <a href={STRIVER_SHEET_URL} target="_blank" rel="noopener noreferrer">
                     Access Striver's A2Z DSA Sheet <ExternalLink className="ml-1 h-3 w-3" />
