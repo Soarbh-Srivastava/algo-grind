@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useFormStatus } from 'react-dom';
 import { useActionState } from 'react';
-import { useRouter } from 'next/navigation';
+// Removed: import { useRouter } from 'next/navigation'; 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { loginUser } from '@/app/login/actions';
 import type { FormState } from '@/app/login/actions';
 import { Icons } from '@/components/icons';
-import { useAuth } from '@/context/auth-context';
+// Removed: import { useAuth } from '@/context/auth-context';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -27,15 +27,15 @@ function SubmitButton() {
 export function LoginForm() {
   const initialState: FormState = { message: "", type: "" };
   const [state, formAction] = useActionState(loginUser, initialState);
-  const router = useRouter();
-  const { currentUser, loading: authLoading } = useAuth();
+  // Removed: const router = useRouter();
+  // Removed: const { currentUser, loading: authLoading } = useAuth();
 
-  React.useEffect(() => {
-    // Redirect if login was successful and user is now available in context
-    if (state.type === "success" && currentUser && !authLoading) {
-      router.push('/');
-    }
-  }, [state.type, currentUser, authLoading, router]);
+  // Removed useEffect for redirection:
+  // React.useEffect(() => {
+  //   if (state.type === "success" && currentUser && !authLoading) {
+  //     router.push('/');
+  //   }
+  // }, [state.type, currentUser, authLoading, router]);
 
   return (
     <form action={formAction} className="space-y-6">
