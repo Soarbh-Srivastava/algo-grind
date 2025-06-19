@@ -2,15 +2,17 @@
 "use client";
 
 import * as React from 'react';
-import { useFormStatus } from 'react-dom'; // useFormStatus remains from react-dom
-import { useActionState } from 'react'; // useActionState is imported from react
+import { useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useRouter } from 'next/navigation'; // Added
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { registerUser } from '@/app/register/actions'; // Removed type FormState import as it's defined in login/actions
-import type { FormState } from '@/app/login/actions'; // Ensure FormState is imported if needed, or define locally
-import { Icons } from '@/components/icons'; // For loading spinner
+import { registerUser } from '@/app/register/actions';
+import type { FormState } from '@/app/login/actions';
+import { Icons } from '@/components/icons';
+import { useAuth } from '@/context/auth-context'; // Added
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -24,8 +26,16 @@ function SubmitButton() {
 
 export function RegisterForm() {
   const initialState: FormState = { message: "", type: "" };
-  // Updated to use useActionState
   const [state, formAction] = useActionState(registerUser, initialState);
+  const router = useRouter(); // Added
+  const { currentUser, loading: authLoading } = useAuth(); // Added
+
+  React.useEffect(() => {
+    // Redirect if registration was successful and user is now available in context
+    if (state.type === "success" && currentUser && !authLoading) {
+      router.push('/');
+    }
+  }, [state.type, currentUser, authLoading, router]);
 
   return (
     <form action={formAction} className="space-y-6">
