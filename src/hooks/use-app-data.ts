@@ -1,9 +1,10 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import type { AppData, SolvedProblem, GoalSettings, Goal } from '@/types';
 import { LOCAL_STORAGE_KEY, GOAL_CATEGORIES } from '@/lib/constants';
 
 const getDefaultGoalSettings = (): GoalSettings => ({
-  period: 'daily',
+  period: 'weekly', // Changed to weekly
   goals: GOAL_CATEGORIES.map(category => ({
     categoryId: category.id,
     target: category.defaultTarget,
@@ -33,8 +34,17 @@ export function useAppData() {
           const defaultGoals = getDefaultGoalSettings().goals;
           for (const defaultGoal of defaultGoals) {
             if (!currentCategoryIds.has(defaultGoal.categoryId)) {
-              parsedData.goalSettings.goals.push(defaultGoal);
+              // Find the category from GOAL_CATEGORIES to get the correct defaultTarget
+              const categoryInfo = GOAL_CATEGORIES.find(cat => cat.id === defaultGoal.categoryId);
+              parsedData.goalSettings.goals.push({
+                categoryId: defaultGoal.categoryId,
+                target: categoryInfo ? categoryInfo.defaultTarget : 0, // Use new default or 0 if somehow not found
+              });
             }
+          }
+           // Ensure the period is also set correctly if missing or old
+          if (!parsedData.goalSettings.period) {
+            parsedData.goalSettings.period = getDefaultGoalSettings().period;
           }
         }
         // Initialize isForReview for older data
@@ -84,10 +94,17 @@ export function useAppData() {
     }));
   }, []);
 
-  const updateGoalSettings = useCallback((newGoalSettings: Partial<GoalSettings>) => {
+  const updateGoalSettings = useCallback((newGoalSettings: GoalSettings) => { // Changed Partial<GoalSettings> to GoalSettings
     setAppData(prev => ({
       ...prev,
-      goalSettings: { ...prev.goalSettings, ...newGoalSettings },
+      // Ensure all properties of GoalSettings are updated, not just partial
+      goalSettings: { 
+        period: newGoalSettings.period, 
+        goals: newGoalSettings.goals.map(goal => ({ // ensure goals are fully formed
+            categoryId: goal.categoryId,
+            target: goal.target
+        }))
+      },
     }));
   }, []);
   

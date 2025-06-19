@@ -1,3 +1,4 @@
+
 import type { ProblemType, Difficulty, GoalCategory } from '@/types';
 
 export const STRIVER_SHEET_URL = 'https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/';
@@ -20,40 +21,40 @@ export const DIFFICULTIES: { value: Difficulty; label: string }[] = [
 ];
 
 export const GOAL_CATEGORIES: GoalCategory[] = [
-  { 
-    id: 'array', 
-    label: 'Array', 
-    defaultTarget: 10,
-    problemTypes: ['array'] 
+  {
+    id: 'array',
+    label: 'Array',
+    defaultTarget: 12, // Updated for weekly total of 70
+    problemTypes: ['array']
   },
-  { 
-    id: 'string', 
-    label: 'String', 
-    defaultTarget: 10,
-    problemTypes: ['string'] 
+  {
+    id: 'string',
+    label: 'String',
+    defaultTarget: 12, // Updated for weekly total of 70
+    problemTypes: ['string']
   },
-  { 
-    id: 'sliding_window', 
-    label: 'Sliding Window', 
-    defaultTarget: 10,
+  {
+    id: 'sliding_window',
+    label: 'Sliding Window',
+    defaultTarget: 12, // Updated for weekly total of 70
     problemTypes: ['sliding window']
   },
-  { 
-    id: 'prefix_sum', 
-    label: 'Prefix Sum', 
-    defaultTarget: 10,
+  {
+    id: 'prefix_sum',
+    label: 'Prefix Sum',
+    defaultTarget: 12, // Updated for weekly total of 70
     problemTypes: ['prefix sum']
   },
-  { 
-    id: 'dp_or_tree', 
-    label: 'DP or Tree', 
-    defaultTarget: 10,
+  {
+    id: 'dp_or_tree',
+    label: 'DP or Tree',
+    defaultTarget: 11, // Updated for weekly total of 70
     problemTypes: ['dp', 'tree']
   },
-  { 
-    id: 'recursion_or_backtracking', 
-    label: 'Recursion or Backtracking', 
-    defaultTarget: 10,
+  {
+    id: 'recursion_or_backtracking',
+    label: 'Recursion or Backtracking',
+    defaultTarget: 11, // Updated for weekly total of 70
     problemTypes: ['recursion', 'backtracking']
   },
 ];
