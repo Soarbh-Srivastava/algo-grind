@@ -263,29 +263,44 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                   )}
                 >
                   <ReactMarkdown
-                    className="prose prose-sm dark:prose-invert max-w-none prose-p:mb-1 prose-p:last:mb-0 prose-code:before:content-none prose-code:after:content-none"
+                    className="prose prose-sm dark:prose-invert max-w-none prose-p:mb-1 prose-p:last:mb-0 prose-code:before:content-none prose-code:after:content-none prose-pre:p-0 prose-pre:bg-transparent"
                     components={{
-                       code({ node, inline, className, children, ...props }) {
-                          const match = /language-(\w+)/.exec(className || '');
+                       pre: ({ node, children, className: preClassName, ...props }) => {
+                          let lang = '';
+                          const codeChild = Array.isArray(children) && children[0] && typeof children[0] === 'object' && 'props' in children[0] ? children[0] as React.ReactElement : null;
+                          if (codeChild && codeChild.props && typeof codeChild.props.className === 'string') {
+                            const match = /language-(\w+)/.exec(codeChild.props.className);
+                            if (match) {
+                              lang = match[1];
+                            }
+                          }
+                          return (
+                            <div className="my-2 rounded-md border bg-card text-card-foreground relative text-[0.9em]">
+                              {lang && <div className="absolute top-1 right-2 text-xs text-muted-foreground select-none z-10">{lang}</div>}
+                              <pre
+                                className={cn("p-3 pt-5 overflow-x-auto", preClassName)}
+                                {...props}
+                              >
+                                {children}
+                              </pre>
+                            </div>
+                          );
+                        },
+                        code({ node, inline, className, children, ...props }) {
                           if (inline) {
                             return (
-                              <code className={cn("bg-foreground/10 text-foreground px-1 py-0.5 rounded text-[0.9em] font-mono relative break-words", className)}>
+                              <code
+                                className={cn("bg-foreground/10 text-foreground px-1 py-0.5 rounded text-[0.9em] font-mono", className)}
+                                {...props}
+                              >
                                 {children}
                               </code>
                             );
                           }
-                          
-                          return match ? (
-                            <div className="my-2 rounded-md border bg-card text-card-foreground p-0 relative text-[0.9em]">
-                              {match[1] && <div className="absolute top-1 right-2 text-xs text-muted-foreground select-none">{match[1]}</div>}
-                              <pre className={cn("p-3 pt-5 overflow-x-auto", className?.replace(`language-${match[1]}`, ''))} {...props}>
-                                <code className={`language-${match[1]}`}>{children}</code>
-                              </pre>
-                            </div>
-                          ) : (
-                            <pre className={cn("bg-card text-card-foreground p-3 my-2 rounded-md text-[0.9em] overflow-x-auto border", className)} {...props}>
-                              <code className={className}>{children}</code>
-                            </pre>
+                          return (
+                            <code className={cn("font-mono", className)} {...props}>
+                              {children}
+                            </code>
                           );
                         }
                     }}
@@ -351,3 +366,5 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     </Card>
   );
 }
+
+    
