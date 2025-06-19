@@ -27,13 +27,46 @@ export async function loginUser(
     // For server action, we might not need to return a success message here if redirect happens
     return { message: "", type: "" }; // Clear message on success attempt before redirect
   } catch (e: any) {
-    let errorMessage = "Failed to login. Please check your credentials.";
-    if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
-        errorMessage = "Invalid email or password.";
-    } else if (e.code === 'auth/invalid-email') {
-        errorMessage = "Please enter a valid email address.";
+    let errorMessage = "An unexpected error occurred during login. Please try again.";
+    // Log the full error object to the server console for detailed diagnosis
+    console.error("Login attempt failed. Firebase error object:", JSON.stringify(e));
+
+    if (e.code) { // Check if e.code exists (Firebase errors usually have this)
+        switch (e.code) {
+            case 'auth/invalid-credential':
+                errorMessage = "Invalid email or password. Please double-check your credentials.";
+                // This is a common error code from Firebase for wrong email/password combinations.
+                console.log("Login error: auth/invalid-credential encountered. This usually means incorrect email or password.");
+                break;
+            case 'auth/invalid-email':
+                errorMessage = "The email address format is not valid.";
+                console.log("Login error: auth/invalid-email encountered.");
+                break;
+            case 'auth/user-disabled':
+                errorMessage = "This user account has been disabled.";
+                console.log("Login error: auth/user-disabled encountered.");
+                break;
+            case 'auth/user-not-found': // Often wrapped into auth/invalid-credential in newer SDKs
+                errorMessage = "No user found with this email. Please register or check the email.";
+                console.log("Login error: auth/user-not-found encountered.");
+                break;
+            case 'auth/wrong-password': // Often wrapped into auth/invalid-credential in newer SDKs
+                errorMessage = "Incorrect password. Please try again.";
+                console.log("Login error: auth/wrong-password encountered.");
+                break;
+            case 'auth/too-many-requests':
+                errorMessage = "Access to this account has been temporarily disabled due to many failed login attempts. You can try again later or reset your password.";
+                console.log("Login error: auth/too-many-requests encountered.");
+                break;
+            default:
+                // For any other Firebase error code not explicitly handled above
+                console.error(`Unhandled Firebase Auth error code during login: ${e.code}`);
+                errorMessage = `Login failed (code: ${e.code}). Please try again later.`;
+        }
+    } else {
+        // For errors that are not Firebase-specific or don't have a 'code' property
+        console.error("Non-Firebase or unknown error during login:", e.message || e);
     }
-    console.error("Login error:", e);
     return { message: errorMessage, type: "error" };
   }
 }
