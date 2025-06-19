@@ -123,12 +123,10 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     setIsChatting(true);
     const newMessage: ChatMessage = { role: 'user', content: chatInput.trim() };
     
-    // Add user message to history
     setChatHistory(prev => [...prev, newMessage]);
     setChatInput(''); 
 
     try {
-      // Prepare history for the flow (all messages except the current new one)
       const currentHistoryForFlow = [...chatHistory, newMessage]; 
       const flowHistory = currentHistoryForFlow.slice(0, -1);
       const input: ChatInput = { message: newMessage.content, history: flowHistory }; 
@@ -152,7 +150,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
   
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    const atBottomThreshold = 10; // Pixels from bottom to be considered "at bottom"
+    const atBottomThreshold = 10; 
     const currentlyAtBottom = scrollHeight - scrollTop - clientHeight < atBottomThreshold;
     
     setIsAtBottom(currentlyAtBottom);
@@ -160,34 +158,33 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
   };
 
   const scrollToBottom = () => {
-    lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    if(lastMessageRef.current) {
+      requestAnimationFrame(() => {
+        lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      });
+    }
     setIsAtBottom(true);
     setShowScrollButton(false);
   };
 
-  React.useEffect(() => {
+ React.useEffect(() => {
     const lastMessage = chatHistory.length > 0 ? chatHistory[chatHistory.length - 1] : null;
 
     if (lastMessageRef.current) {
       if (lastMessage && lastMessage.role === 'user') {
-        // Always scroll to user's own message and consider them at the bottom
         requestAnimationFrame(() => {
           lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
           setIsAtBottom(true);
           setShowScrollButton(false);
         });
       } else if (lastMessage && lastMessage.role === 'model' && isAtBottom) {
-        // If AI message and user was already at bottom, scroll
         requestAnimationFrame(() => {
           lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
         });
       }
-      // If AI message and user was scrolled up (isAtBottom is false), do nothing here.
-      // handleScroll would have shown the button if applicable.
     }
-  }, [chatHistory]); // Only re-run when chatHistory changes
+  }, [chatHistory, isAtBottom]);
 
-  // Ensure initial state or empty chat has isAtBottom true
   React.useEffect(() => {
     if (chatHistory.length === 0) {
       setIsAtBottom(true);
@@ -277,7 +274,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
           <BotIcon className="mr-2 h-6 w-6" /> Chat with Mentor
         </h3>
         <ScrollArea 
-          className="flex-1 border rounded-md p-2 md:p-4 bg-muted/20 min-h-[200px] max-h-[400px]"
+          className="border rounded-md p-2 md:p-4 bg-muted/20 min-h-[200px] max-h-[400px]"
           onScrollCapture={handleScroll}
         >
           <div className="space-y-3 md:space-y-4">
@@ -304,47 +301,47 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                   )}
                 >
                   <ReactMarkdown
-                    className="prose prose-sm dark:prose-invert max-w-none prose-p:mb-1 prose-p:last:mb-0 prose-code:before:content-none prose-code:after:content-none prose-pre:p-0 prose-pre:bg-transparent"
+                    className="prose prose-sm dark:prose-invert max-w-none prose-p:last:mb-0 prose-code:before:content-none prose-code:after:content-none prose-pre:p-0 prose-pre:bg-transparent"
                     components={{
-                       pre: ({node, children, className: preClassName, ...props }) => {
-                          const codeChild = Array.isArray(children) && children[0] && typeof children[0] === 'object' && 'props' in children[0] ? children[0] as React.ReactElement : null;
-                          let lang = '';
-                          if (codeChild && codeChild.props && typeof codeChild.props.className === 'string') {
-                            const match = /language-(\w+)/.exec(codeChild.props.className);
-                            if (match) {
-                              lang = match[1];
-                            }
+                      pre: ({ node, children, className: preClassName, ...props }) => {
+                        const codeChild = Array.isArray(children) && children[0] && typeof children[0] === 'object' && 'props' in children[0] ? children[0] as React.ReactElement : null;
+                        let lang = '';
+                        if (codeChild && codeChild.props && typeof codeChild.props.className === 'string') {
+                          const match = /language-(\w+)/.exec(codeChild.props.className);
+                          if (match) {
+                            lang = match[1];
                           }
+                        }
+                        return (
+                          <div className="my-2 w-full rounded-md border bg-card text-card-foreground relative text-[0.9em] overflow-x-auto">
+                            {lang && <div className="absolute top-1 right-2 text-xs text-muted-foreground select-none z-10">{lang}</div>}
+                            <pre
+                              className={cn("p-3 pt-5 whitespace-pre", preClassName)}
+                              {...props}
+                            >
+                              {children}
+                            </pre>
+                          </div>
+                        );
+                      },
+                      code({ node, inline, className, children, ...props }) {
+                        if (inline) {
                           return (
-                            <div className="my-2 w-full rounded-md border bg-card text-card-foreground relative text-[0.9em] overflow-x-auto">
-                              {lang && <div className="absolute top-1 right-2 text-xs text-muted-foreground select-none z-10">{lang}</div>}
-                              <pre
-                                className={cn("p-3 pt-5 whitespace-pre", preClassName)}
-                                {...props}
-                              >
-                                {children}
-                              </pre>
-                            </div>
-                          );
-                        },
-                        code({ node, inline, className, children, ...props }) {
-                          if (inline) {
-                            return (
-                              <code
-                                className={cn("bg-foreground/10 text-foreground px-1 py-0.5 rounded text-[0.9em] font-mono", className)}
-                                {...props}
-                              >
-                                {children}
-                              </code>
-                            );
-                          }
-                          // Block code (handled by pre)
-                          return (
-                            <code className={cn("font-mono", className)} {...props}>
+                            <code
+                              className={cn("bg-foreground/10 text-foreground px-1 py-0.5 rounded text-[0.9em] font-mono", className)}
+                            >
                               {children}
                             </code>
                           );
                         }
+                        // For block code, react-markdown wraps it in <pre> then <code>.
+                        // Our <pre> renderer handles the container. This <code> just passes through.
+                        return (
+                          <code className={cn("font-mono", className)} {...props}>
+                            {children}
+                          </code>
+                        );
+                      }
                     }}
                   >
                     {msg.content}
