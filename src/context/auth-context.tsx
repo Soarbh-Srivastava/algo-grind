@@ -7,9 +7,9 @@ import {
   signOut as firebaseSignOut, 
   GoogleAuthProvider, 
   signInWithPopup,
-  type User as FirebaseUser,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
+  type User as FirebaseUser
+  // Removed: createUserWithEmailAndPassword,
+  // Removed: signInWithEmailAndPassword
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -20,8 +20,8 @@ interface AuthContextType {
   loading: boolean;
   logout: () => Promise<void>;
   signInWithGoogle: () => Promise<FirebaseUser | null>;
-  signUpWithEmail: (email: string, pass: string) => Promise<FirebaseUser | null>;
-  signInWithEmail: (email: string, pass: string) => Promise<FirebaseUser | null>;
+  // Removed: signUpWithEmail: (email: string, pass: string) => Promise<FirebaseUser | null>;
+  // Removed: signInWithEmail: (email: string, pass: string) => Promise<FirebaseUser | null>;
 }
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
@@ -56,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const result = await signInWithPopup(auth, provider);
       toast({ title: "Signed In", description: "Successfully signed in with Google." });
+      // Redirection for Google Sign-In will be handled by useEffect in pages
       return result.user;
     } catch (error: any)
        {
@@ -75,40 +76,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUpWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-      toast({ title: "Account Created", description: "Successfully signed up and logged in."});
-      return userCredential.user;
-    } catch (error: any) {
-      console.error("Error signing up with email:", error);
-      return null;
-    }
-  };
-  
-  const signInWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-      toast({ title: "Signed In", description: "Successfully signed in with email."});
-      return userCredential.user;
-    } catch (error: any) {
-      console.error("Error signing in with email:", error);
-      return null;
-    }
-  };
+  // Removed signUpWithEmail method
+  // Removed signInWithEmail method
 
   const value: AuthContextType = {
     currentUser,
     loading,
     logout,
     signInWithGoogle,
-    signUpWithEmail,
-    signInWithEmail,
+    // Removed: signUpWithEmail,
+    // Removed: signInWithEmail,
   };
-
-  // The conditional rendering based on `loading && typeof window !== 'undefined'` was removed
-  // as it was causing hydration issues. Individual pages (login, register, home) 
-  // already have their own loading indicators that handle this more gracefully.
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
