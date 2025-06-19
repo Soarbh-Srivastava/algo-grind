@@ -287,6 +287,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         </h3>
         {/* Chat messages area */}
         <ScrollArea
+          type="auto"
           className="border rounded-md p-2 md:p-4 bg-muted/20 flex-1 min-h-0"
           ref={chatContainerRef}
           onScrollCapture={handleScroll}
