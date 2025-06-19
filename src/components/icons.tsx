@@ -30,9 +30,11 @@ import {
   Bot,
   Bookmark,
   User, 
-  LogOut, // Added LogOut
+  LogOut, 
   Mail,
   KeyRound,
+  Sun, // Added Sun icon
+  Moon, // Added Moon icon
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import type { ProblemType } from '@/types';
@@ -50,7 +52,7 @@ export const Icons = {
   Analytics: (props: LucideProps) => <BarChart3 {...props} />,
   AIMentor: (props: LucideProps) => <Bot {...props} />, 
   GitHub: (props: LucideProps) => <Github {...props} />,
-  Link: (props: LucideProps) => <LinkIcon {...props} />, // Using LinkIcon
+  Link: (props: LucideProps) => <LinkIcon {...props} />, 
   Calendar: (props: LucideProps) => <CalendarDays {...props} />,
   Tag: (props: LucideProps) => <Tag {...props} />,
   Archive: (props: LucideProps) => <Archive {...props} />,
@@ -65,9 +67,11 @@ export const Icons = {
   ChevronUp: (props: LucideProps) => <ChevronUp {...props} />,
   Bookmark: (props: LucideProps) => <Bookmark {...props} />,
   User: (props: LucideProps) => <User {...props} />,
-  LogOut: (props: LucideProps) => <LogOut {...props} />, // Added LogOut Icon
+  LogOut: (props: LucideProps) => <LogOut {...props} />, 
   Mail: (props: LucideProps) => <Mail {...props} />,
   Password: (props: LucideProps) => <KeyRound {...props} />,
+  Sun: (props: LucideProps) => <Sun {...props} />, // Added Sun icon
+  Moon: (props: LucideProps) => <Moon {...props} />, // Added Moon icon
   Logo: (props: LucideProps) => ( 
     <svg 
       xmlns="http://www.w3.org/2000/svg" 
@@ -84,7 +88,7 @@ export const Icons = {
       <path d="M2 12l10 5 10-5"/>
     </svg>
   ),
-  Google: (props: LucideProps) => ( // Added Google Icon
+  Google: (props: LucideProps) => ( 
     <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
       <title>Google</title>
       <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.05 1.05-2.36 1.84-4.33 1.84A6.957 6.957 0 0 1 12.01 12a6.957 6.957 0 0 1-6.22-6.95c0-1.84.63-3.34 1.88-4.47A6.957 6.957 0 0 1 12.01 0c1.93 0 3.56.7 4.73 1.84l-2.02 1.93c-.42-.39-1.03-.78-2.1-.78-1.6 0-3.05 1.15-3.05 3.05s1.45 3.05 3.05 3.05c1.02 0 1.7-.31 2.02-.72.5-.55.85-1.42.85-2.52h-2.87z" fill="currentColor"/>

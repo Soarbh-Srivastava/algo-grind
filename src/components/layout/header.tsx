@@ -15,7 +15,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, LogOut } from 'lucide-react'; // Added User, LogOut
+import { User, LogOut } from 'lucide-react'; 
+import { ThemeToggle } from '@/components/theme-toggle'; // Added ThemeToggle import
 
 function getInitials(name?: string | null): string {
   if (!name) return "AG"; // Algo Grind initials as fallback
@@ -37,6 +38,7 @@ export function AppHeader() {
         </Link>
         
         <div className="flex items-center space-x-2">
+           <ThemeToggle /> {/* Added ThemeToggle button */}
           {!loading && (
             <>
               {currentUser ? (
