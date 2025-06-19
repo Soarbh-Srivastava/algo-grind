@@ -59,7 +59,7 @@ export default function HomePage() {
       <AppHeader />
       <main className="flex-1 container mx-auto py-8 px-4">
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-6 sticky top-[calc(theme(spacing.16)+1px)] bg-background/90 backdrop-blur-sm z-30 py-2 shadow-sm">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-6 md:sticky md:top-[calc(theme(spacing.16)+1px)] bg-background/90 backdrop-blur-sm z-30 py-2 shadow-sm">
             <TabsTrigger value="dashboard" className="font-headline text-base">
               <Icons.Dashboard className="mr-2 h-5 w-5" /> Dashboard
             </TabsTrigger>
