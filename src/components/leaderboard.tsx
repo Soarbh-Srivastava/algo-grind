@@ -13,11 +13,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const USER_PUBLIC_PROFILES_COLLECTION = 'userPublicProfiles';
 
-function getInitials(name?: string | null): string {
-  if (!name) return "AG";
-  const names = name.split(' ');
-  if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
-  return names[0].substring(0, 1).toUpperCase() + names[names.length - 1].substring(0, 1).toUpperCase();
+function getInitials(name?: string | null, email?: string | null): string {
+  const targetName = name || email?.split('@')[0];
+  if (!targetName || targetName.trim() === "") return "AG"; 
+  const names = targetName.trim().split(' ').filter(n => n);
+  if (names.length === 0) return "AG";
+  if (names.length === 1 && names[0].length > 0) return names[0].substring(0, Math.min(2, names[0].length)).toUpperCase();
+  if (names.length > 1 && names[0].length > 0 && names[names.length - 1].length > 0) {
+     return names[0].substring(0, 1).toUpperCase() + names[names.length - 1].substring(0, 1).toUpperCase();
+  }
+  return (names[0] || "A").substring(0,1).toUpperCase();
 }
 
 export function Leaderboard() {
@@ -103,7 +108,7 @@ export function Leaderboard() {
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-9 w-9">
                         {profile.photoURL && <AvatarImage src={profile.photoURL} alt={profile.displayName || 'User'} />}
-                        <AvatarFallback>{getInitials(profile.displayName)}</AvatarFallback>
+                        <AvatarFallback>{getInitials(profile.displayName, profile.userId)}</AvatarFallback> {/* Pass userId as fallback for email part */}
                       </Avatar>
                       <span>{profile.displayName || 'Anonymous Grinder'}</span>
                     </div>

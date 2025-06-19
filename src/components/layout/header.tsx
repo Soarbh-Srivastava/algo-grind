@@ -15,14 +15,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, LogOut } from 'lucide-react'; 
-import { ThemeToggle } from '@/components/theme-toggle'; // Added ThemeToggle import
+import { User, LogOut, Settings as SettingsIcon } from 'lucide-react'; 
+import { ThemeToggle } from '@/components/theme-toggle';
 
 function getInitials(name?: string | null): string {
-  if (!name) return "AG"; // Algo Grind initials as fallback
-  const names = name.split(' ');
-  if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
-  return names[0].substring(0, 1).toUpperCase() + names[names.length - 1].substring(0, 1).toUpperCase();
+  if (!name || name.trim() === "") return "AG"; // Algo Grind initials as fallback
+  const names = name.trim().split(' ').filter(n => n); // Filter out empty strings
+  if (names.length === 0) return "AG";
+  if (names.length === 1 && names[0].length > 0) return names[0].substring(0, Math.min(2, names[0].length)).toUpperCase();
+  if (names.length > 1 && names[0].length > 0 && names[names.length - 1].length > 0) {
+     return names[0].substring(0, 1).toUpperCase() + names[names.length - 1].substring(0, 1).toUpperCase();
+  }
+  // Fallback for single, very short name or unusual cases
+  return (names[0] || "A").substring(0,1).toUpperCase();
 }
 
 export function AppHeader() {
@@ -38,7 +43,7 @@ export function AppHeader() {
         </Link>
         
         <div className="flex items-center space-x-2">
-           <ThemeToggle /> {/* Added ThemeToggle button */}
+           <ThemeToggle />
           {!loading && (
             <>
               {currentUser ? (
@@ -63,11 +68,10 @@ export function AppHeader() {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {/* Add any other user-specific links here, e.g., Profile */}
-                    {/* <DropdownMenuItem onClick={() => router.push('/profile')}>
-                      <User className="mr-2 h-4 w-4" />
+                    <DropdownMenuItem onClick={() => router.push('/profile')}>
+                      <SettingsIcon className="mr-2 h-4 w-4" />
                       Profile
-                    </DropdownMenuItem> */}
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={logout}>
                       <LogOut className="mr-2 h-4 w-4" />
                       Log out
