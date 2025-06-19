@@ -23,37 +23,37 @@ export const GOAL_CATEGORIES: GoalCategory[] = [
   { 
     id: 'array', 
     label: 'Array', 
-    defaultTarget: 2,
+    defaultTarget: 10,
     problemTypes: ['array'] 
   },
   { 
     id: 'string', 
     label: 'String', 
-    defaultTarget: 2,
+    defaultTarget: 10,
     problemTypes: ['string'] 
   },
   { 
     id: 'sliding_window', 
     label: 'Sliding Window', 
-    defaultTarget: 2,
+    defaultTarget: 10,
     problemTypes: ['sliding window']
   },
   { 
     id: 'prefix_sum', 
     label: 'Prefix Sum', 
-    defaultTarget: 2,
+    defaultTarget: 10,
     problemTypes: ['prefix sum']
   },
   { 
     id: 'dp_or_tree', 
     label: 'DP or Tree', 
-    defaultTarget: 1,
+    defaultTarget: 10,
     problemTypes: ['dp', 'tree']
   },
   { 
     id: 'recursion_or_backtracking', 
     label: 'Recursion or Backtracking', 
-    defaultTarget: 1,
+    defaultTarget: 10,
     problemTypes: ['recursion', 'backtracking']
   },
 ];
