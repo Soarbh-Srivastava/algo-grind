@@ -81,21 +81,26 @@ export function useAppData() {
         }
       } catch (error: any) {
         console.error("Failed to load or initialize data from Firestore:", error);
+        // More specific logging for permission errors
         if (error.code === 'permission-denied' || 
             (error.message && error.message.toLowerCase().includes("permission denied")) || 
             (error.message && error.message.toLowerCase().includes("insufficient permissions")) ||
             (error.message && error.message.toLowerCase().includes("missing or insufficient permissions"))) {
           console.error(
-            "Firestore permission denied. This usually means your Firestore security rules are blocking access. " +
-            "Please check your Firestore security rules in the Firebase console. " +
-            `Ensure they allow read/write access to the '${FIRESTORE_COLLECTION_ID}/${FIRESTORE_DOCUMENT_ID}' document for unauthenticated users.` +
-            " Example rules:\n" +
+            "CRITICAL: Firestore Permission Denied. This means your Firestore security rules are blocking access. " +
+            "Please go to your Firebase project console -> Firestore Database -> Rules tab. " +
+            `Ensure your rules allow read/write access to the '${FIRESTORE_COLLECTION_ID}/${FIRESTORE_DOCUMENT_ID}' document for unauthenticated users.` +
+            "A common rule for this scenario is:\n" +
             "rules_version = '2';\n" +
             "service cloud.firestore {\n" +
             "  match /databases/{database}/documents {\n" +
             `    match /${FIRESTORE_COLLECTION_ID}/${FIRESTORE_DOCUMENT_ID} {\n` +
             "      allow read, write: if true;\n" +
             "    }\n" +
+            "    // Optionally, restrict all other paths if this is your only public document:\n"+
+            "    // match /{document=**} {\n" +
+            "    //   allow read, write: if false;\n" +
+            "    // }\n" +
             "  }\n" +
             "}"
           );
