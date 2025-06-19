@@ -129,7 +129,6 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
 
     try {
       const currentHistoryForFlow = [...chatHistory, newMessage];
-      // Pass all but the last message (which is the current one) as history to the flow
       const flowHistory = currentHistoryForFlow.slice(0, -1); 
       const input: ChatInput = { message: newMessage.content, history: flowHistory };
 
@@ -152,7 +151,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    const atBottomThreshold = 10; // Pixels from bottom to be considered "at bottom"
+    const atBottomThreshold = 10; 
     const currentlyAtBottom = scrollHeight - scrollTop - clientHeight < atBottomThreshold;
 
     setIsAtBottom(currentlyAtBottom);
@@ -161,7 +160,6 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
 
   const scrollToBottom = () => {
     if(lastMessageRef.current) {
-      // Use requestAnimationFrame for smoother scroll after DOM updates
       requestAnimationFrame(() => {
         lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       });
@@ -174,29 +172,26 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     const lastMessage = chatHistory.length > 0 ? chatHistory[chatHistory.length - 1] : null;
 
     if (lastMessageRef.current) {
-      // Always scroll if the user sent the last message, or if the model sent it and user is already at bottom
       if ((lastMessage && lastMessage.role === 'user') || (lastMessage && lastMessage.role === 'model' && isAtBottom)) {
         requestAnimationFrame(() => {
           lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
         });
       }
     }
-     // Update scroll button visibility based on new history and scroll position
+     
      if (lastMessageRef.current) {
-      // It's possible lastMessageRef.current.parentElement is null if component unmounts quickly
-      const scrollContainer = lastMessageRef.current.parentElement?.parentElement; // Refers to the ScrollArea's viewport or content div
+      const scrollContainer = lastMessageRef.current.parentElement?.parentElement; 
       if (scrollContainer) {
         const { scrollHeight, clientHeight, scrollTop } = scrollContainer;
         const currentlyAtBottom = scrollHeight - scrollTop - clientHeight < 10;
         setShowScrollButton(!currentlyAtBottom && scrollHeight > clientHeight + 10);
       } else {
-        setShowScrollButton(false); // Default to not showing if container not found
+        setShowScrollButton(false);
       }
     }
 
   }, [chatHistory, isAtBottom]);
 
-  // Reset states if chat history becomes empty
   React.useEffect(() => {
     if (chatHistory.length === 0) {
       setIsAtBottom(true);
@@ -313,9 +308,9 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                   )}
                 >
                   <ReactMarkdown
-                    className="prose prose-sm dark:prose-invert max-w-none prose-p:last:mb-0 prose-code:before:content-none prose-code:after:content-none prose-pre:bg-transparent"
+                    className="prose prose-sm dark:prose-invert max-w-none prose-p:last:mb-0 prose-code:before:content-none prose-code:after:content-none prose-pre:p-0 prose-pre:bg-transparent"
                     components={{
-                       pre: ({ node, children, className: preClassName, ...props }) => {
+                      pre: ({ node, children, className: preClassName, ...props }) => {
                         const codeChild = Array.isArray(children) && children[0] && typeof children[0] === 'object' && 'props' in children[0] ? children[0] as React.ReactElement : null;
                         let lang = '';
                         if (codeChild && codeChild.props && typeof codeChild.props.className === 'string') {
@@ -341,12 +336,14 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                           return (
                             <code
                               className={cn("bg-foreground/10 text-foreground px-1 py-0.5 rounded text-[0.9em] font-mono", className)}
-                              {...props} // Pass props for inline code
+                              {...props}
                             >
                               {children}
                             </code>
                           );
                         }
+                        // For code blocks, we want the <pre> to handle the styling,
+                        // so just pass through children and the language class.
                         return (
                           <code className={cn("font-mono", className)} {...props}>
                             {children}
@@ -368,7 +365,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
              {isChatting && chatHistory[chatHistory.length -1]?.role === 'user' && (
                 <div
                   className="flex items-start space-x-2 md:space-x-3 justify-start pr-6 md:pr-10"
-                  ref={lastMessageRef} // Also apply ref here so loading indicator scrolls into view
+                  ref={lastMessageRef} 
                 >
                     <Avatar className="h-7 w-7 md:h-8 md:w-8 shrink-0">
                         <AvatarFallback><BotIcon size={16} className="md:h-5 md:w-5"/></AvatarFallback>
