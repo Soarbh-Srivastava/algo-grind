@@ -11,9 +11,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase'; // Ensure auth is exported from firebase.ts
+import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation'; // For redirecting
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   currentUser: FirebaseUser | null;
@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = React.useState<FirebaseUser | null>(null);
   const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
-  const router = useRouter();
+  const router = useRouter(); // Keep router for logout redirect
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -43,9 +43,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await firebaseSignOut(auth);
-      setCurrentUser(null);
+      // setCurrentUser(null); // onAuthStateChanged will handle this
       router.push('/login'); // Redirect to login after logout
-       toast({ title: "Logged Out", description: "You have been successfully logged out." });
+      toast({ title: "Logged Out", description: "You have been successfully logged out." });
     } catch (error: any) {
       console.error("Error logging out:", error);
       toast({ variant: "destructive", title: "Logout Error", description: error.message });
@@ -56,11 +56,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      setCurrentUser(result.user);
-      router.push('/'); // Redirect to home after successful Google sign-in
+      // setCurrentUser(result.user); // onAuthStateChanged will handle this
+      // router.push('/'); // Removed: Let page useEffect handle redirect
       toast({ title: "Signed In", description: "Successfully signed in with Google." });
       return result.user;
-    } catch (error: any) {
+    } catch (error: any)
+       {
       console.error("Error signing in with Google:", error);
       let description = "An unexpected error occurred. Please try again.";
       if (error.code === 'auth/popup-closed-by-user') {
@@ -80,13 +81,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUpWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-      setCurrentUser(userCredential.user);
-      router.push('/'); // Redirect to home after successful sign-up
+      // setCurrentUser(userCredential.user); // onAuthStateChanged will handle this
+      // router.push('/'); // Removed: Let page useEffect handle redirect
       toast({ title: "Account Created", description: "Successfully signed up and logged in."});
       return userCredential.user;
     } catch (error: any) {
       console.error("Error signing up with email:", error);
-      toast({ variant: "destructive", title: "Sign Up Error", description: error.message });
+      // Server actions will display more specific errors from register/actions.ts
+      // toast({ variant: "destructive", title: "Sign Up Error", description: error.message });
       return null;
     }
   };
@@ -94,17 +96,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-      setCurrentUser(userCredential.user);
-      router.push('/'); // Redirect to home after successful sign-in
+      // setCurrentUser(userCredential.user); // onAuthStateChanged will handle this
+      // router.push('/'); // Removed: Let page useEffect handle redirect
       toast({ title: "Signed In", description: "Successfully signed in with email."});
       return userCredential.user;
     } catch (error: any) {
       console.error("Error signing in with email:", error);
-      toast({ variant: "destructive", title: "Sign In Error", description: error.message });
+      // Server actions will display more specific errors from login/actions.ts
+      // toast({ variant: "destructive", title: "Sign In Error", description: error.message });
       return null;
     }
   };
-
 
   const value: AuthContextType = {
     currentUser,
@@ -115,10 +117,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithEmail,
   };
 
-  if (loading) {
-    // You might want a global loading spinner here
+  // The loading screen handled by pages like login/page.tsx or the main page.tsx
+  // is generally preferred over a global one here, to avoid layout shifts if possible.
+  // However, keeping a basic one if children absolutely depend on auth being resolved.
+  if (loading && typeof window !== 'undefined') { // Check for window to avoid SSR issues with this basic loader
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
+        {/* You might want a more sophisticated global loader or skeleton here */}
         <p>Loading authentication...</p>
       </div>
     );
