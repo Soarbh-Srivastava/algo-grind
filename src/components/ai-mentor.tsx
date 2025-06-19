@@ -36,7 +36,7 @@ interface AiMentorProps {
 type FlowProblemType = z.infer<typeof ProblemTypeEnum>;
 
 const mapToAIProblemType = (type: AppProblemType): FlowProblemType | undefined => {
-  const validTypes = ProblemTypeEnum.options; // Corrected: Use .options to get enum values
+  const validTypes = ProblemTypeEnum.options;
   if (validTypes.includes(type)) {
     return type as FlowProblemType;
   }
@@ -120,15 +120,12 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     setIsChatting(true);
     const newMessage: ChatMessage = { role: 'user', content: chatInput.trim() };
     
-    // Optimistically update chat history with user's message
     setChatHistory(prev => [...prev, newMessage]);
-    setChatInput(''); // Clear input after sending
+    setChatInput(''); 
 
     try {
-      // Pass the *newly updated* history to the flow. 
-      // The current `chatHistory` state won't include `newMessage` yet due to async nature of setState.
       const currentHistoryForFlow = [...chatHistory, newMessage];
-      const input: ChatInput = { message: newMessage.content, history: currentHistoryForFlow.slice(0, -1) }; // Exclude the latest user message from history for the flow
+      const input: ChatInput = { message: newMessage.content, history: currentHistoryForFlow.slice(0, -1) }; 
       
       const result: ChatOutput = await chatWithMentor(input);
       const aiResponse: ChatMessage = { role: 'model', content: result.response };
@@ -266,7 +263,6 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                   <ReactMarkdown
                     className="prose prose-sm dark:prose-invert max-w-none prose-p:mb-1 prose-p:last:mb-0 prose-code:before:content-none prose-code:after:content-none"
                     components={{
-                       p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
                        code({ node, inline, className, children, ...props }) {
                           const match = /language-(\w+)/.exec(className || '');
                           if (inline) {
