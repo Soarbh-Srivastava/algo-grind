@@ -29,7 +29,7 @@ export async function registerUser(
   try {
     await createUserWithEmailAndPassword(auth, email, password);
     // User creation success, onAuthStateChanged will handle redirect
-    return { message: "", type: "" }; // Clear message
+    return { message: "Registration successful! You will be redirected shortly.", type: "success" };
   } catch (e: any) {
     let errorMessage = "Failed to register. Please try again.";
      if (e.code === 'auth/email-already-in-use') {

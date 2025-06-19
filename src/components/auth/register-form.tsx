@@ -1,16 +1,18 @@
+
 // src/components/auth/register-form.tsx
 "use client";
 
 import * as React from 'react';
-import { useActionState } from 'react'; // Updated import
-import { useFormStatus } from 'react-dom'; // useFormStatus remains in react-dom
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { registerUser } from '@/app/register/actions';
-import type { FormState } from '@/app/login/actions'; // Re-use FormState
+import type { FormState } from '@/app/login/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Icons } from '@/components/icons';
+import { useToast } from "@/hooks/use-toast"; // Import useToast
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -24,11 +26,23 @@ function SubmitButton() {
 
 export function RegisterForm() {
   const initialState: FormState = { message: '', type: '' };
-  const [state, formAction] = useActionState(registerUser, initialState); // Updated usage
+  const [state, formAction] = useActionState(registerUser, initialState);
+  const { toast } = useToast(); // Get toast function
+
+  React.useEffect(() => {
+    if (state.type === 'success' && state.message) {
+      toast({
+        title: "Registration Successful!",
+        description: state.message,
+        variant: "default", 
+      });
+    }
+    // Error messages are handled by the Alert component below
+  }, [state, toast]);
 
   return (
     <form action={formAction} className="space-y-6">
-      {state.message && state.type === 'error' && (
+      {state.type === 'error' && state.message && (
         <Alert variant="destructive">
           <AlertDescription>{state.message}</AlertDescription>
         </Alert>
