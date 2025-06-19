@@ -36,7 +36,7 @@ interface AiMentorProps {
 type FlowProblemType = z.infer<typeof ProblemTypeEnum>;
 
 const mapToAIProblemType = (type: AppProblemType): FlowProblemType | undefined => {
-  const validTypes = ProblemTypeEnum.unwrap().innerType.enum;
+  const validTypes = ProblemTypeEnum.options; // Corrected: Use .options to get enum values
   if (validTypes.includes(type)) {
     return type as FlowProblemType;
   }
