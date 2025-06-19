@@ -24,38 +24,39 @@ export const GOAL_CATEGORIES: GoalCategory[] = [
   {
     id: 'array',
     label: 'Array',
-    defaultTarget: 12, 
+    defaultTarget: 2, 
     problemTypes: ['array']
   },
   {
     id: 'string',
     label: 'String',
-    defaultTarget: 12, 
+    defaultTarget: 2, 
     problemTypes: ['string']
   },
   {
     id: 'sliding_window',
     label: 'Sliding Window',
-    defaultTarget: 12, 
+    defaultTarget: 2, 
     problemTypes: ['sliding window']
   },
   {
     id: 'prefix_sum',
     label: 'Prefix Sum',
-    defaultTarget: 12, 
+    defaultTarget: 2, 
     problemTypes: ['prefix sum']
   },
   {
     id: 'dp_or_tree',
     label: 'DP or Tree',
-    defaultTarget: 11, 
+    defaultTarget: 1, 
     problemTypes: ['dp', 'tree']
   },
   {
     id: 'recursion_or_backtracking',
     label: 'Recursion or Backtracking',
-    defaultTarget: 11, 
+    defaultTarget: 1, 
     problemTypes: ['recursion', 'backtracking']
   },
 ];
 // Removed: export const LOCAL_STORAGE_KEY = 'algoGrindData';
+
