@@ -155,7 +155,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
 
 
   return (
-    <Card className="shadow-lg flex flex-col h-full max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-150px)]">
+    <Card className="shadow-lg flex flex-col h-full max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-150px)] overflow-y-auto">
       <CardHeader>
         <CardTitle className="font-headline text-2xl text-primary flex items-center">
           <Icons.AIMentor className="mr-2 h-7 w-7" /> AI Mentor
@@ -165,7 +165,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="space-y-6 overflow-y-auto">
+      <CardContent className="space-y-6">
         {solvedProblems.length === 0 && !isLoadingRecommendations && (
            <Alert variant="default" className="bg-accent/20 border-accent/50">
             <Lightbulb className="h-5 w-5 text-accent" />
@@ -287,11 +287,14 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                             return (
                               <code
                                 className={cn("bg-foreground/10 text-foreground px-1 py-0.5 rounded text-[0.9em] font-mono", className)}
+                                {...props} // Keep props for inline if they are simple (e.g., key)
                               >
                                 {children}
                               </code>
                             );
                           }
+                          // For block code (inside pre), className and children are primary.
+                          // The 'pre' renderer handles the container div and the <pre> tag itself.
                           return (
                             <code className={cn("font-mono", className)} {...props}>
                               {children}
