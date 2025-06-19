@@ -43,7 +43,7 @@ export async function loginUser(
         switch (e.code) {
             case 'auth/invalid-credential':
                 errorMessage = "Invalid email or password. Please double-check your credentials.";
-                console.log("Login error detail: auth/invalid-credential. This usually means incorrect email or password combination, or the user does not exist.");
+                console.log("Login error detail: auth/invalid-credential. This usually means an incorrect email or password combination, or the user account does not exist. Please also ensure the Email/Password sign-in method is enabled in your Firebase project settings (Authentication -> Sign-in method).");
                 break;
             case 'auth/invalid-email':
                 errorMessage = "The email address format is not valid.";
@@ -55,11 +55,11 @@ export async function loginUser(
                 break;
             case 'auth/user-not-found': // Often wrapped into auth/invalid-credential in newer SDKs
                 errorMessage = "No user found with this email. Please register or check the email.";
-                console.log("Login error detail: auth/user-not-found.");
+                console.log("Login error detail: auth/user-not-found. This might be reported as auth/invalid-credential by newer Firebase SDKs.");
                 break;
             case 'auth/wrong-password': // Often wrapped into auth/invalid-credential in newer SDKs
                 errorMessage = "Incorrect password. Please try again.";
-                console.log("Login error detail: auth/wrong-password.");
+                console.log("Login error detail: auth/wrong-password. This might be reported as auth/invalid-credential by newer Firebase SDKs.");
                 break;
             case 'auth/too-many-requests':
                 errorMessage = "Access to this account has been temporarily disabled due to many failed login attempts. You can try again later or reset your password.";
