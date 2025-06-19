@@ -60,20 +60,20 @@ export default function HomePage() {
       <main className="flex-1 container mx-auto py-8 px-4">
         <Tabs defaultValue="dashboard" className="w-full">
           <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-6 md:sticky md:top-[calc(theme(spacing.16)+1px)] bg-background/90 backdrop-blur-sm z-30 py-2 shadow-sm">
-            <TabsTrigger value="dashboard" className="font-headline text-base">
-              <Icons.Dashboard className="mr-2 h-5 w-5" /> Dashboard
+            <TabsTrigger value="dashboard" className="font-headline text-sm md:text-base justify-start">
+              <Icons.Dashboard className="mr-1 md:mr-2 h-4 w-4 md:h-5 md:w-5" /> Dashboard
             </TabsTrigger>
-            <TabsTrigger value="log" className="font-headline text-base">
-              <Icons.Archive className="mr-2 h-5 w-5" /> Problem Log
+            <TabsTrigger value="log" className="font-headline text-sm md:text-base justify-start">
+              <Icons.Archive className="mr-1 md:mr-2 h-4 w-4 md:h-5 md:w-5" /> Problem Log
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="font-headline text-base">
-              <Icons.Analytics className="mr-2 h-5 w-5" /> Analytics
+            <TabsTrigger value="analytics" className="font-headline text-sm md:text-base justify-start">
+              <Icons.Analytics className="mr-1 md:mr-2 h-4 w-4 md:h-5 md:w-5" /> Analytics
             </TabsTrigger>
-            <TabsTrigger value="mentor" className="font-headline text-base">
-              <Icons.AIMentor className="mr-2 h-5 w-5" /> AI Mentor
+            <TabsTrigger value="mentor" className="font-headline text-sm md:text-base justify-start">
+              <Icons.AIMentor className="mr-1 md:mr-2 h-4 w-4 md:h-5 md:w-5" /> AI Mentor
             </TabsTrigger>
-            <TabsTrigger value="leaderboard" className="font-headline text-base">
-              <Icons.Trophy className="mr-2 h-5 w-5" /> Leaderboard
+            <TabsTrigger value="leaderboard" className="font-headline text-sm md:text-base justify-start">
+              <Icons.Trophy className="mr-1 md:mr-2 h-4 w-4 md:h-5 md:w-5" /> Leaderboard
             </TabsTrigger>
           </TabsList>
           
