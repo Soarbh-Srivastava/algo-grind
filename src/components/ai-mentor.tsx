@@ -4,7 +4,6 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import type { SolvedProblem, Recommendation as RecommendationType, ProblemType as AppProblemType, ChatInput, ChatOutput, ChatMessage } from '@/types';
 import { ProblemTypeEnum } from '@/types';
@@ -24,6 +23,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { z } from 'zod';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
@@ -160,7 +160,18 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
     }
   };
 
- const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+  React.useEffect(() => {
+    if (lastMessageRef.current && isAtBottom) {
+      setTimeout(() => { 
+        lastMessageRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'end'
+        });
+      }, 100);
+    }
+  }, [chatHistory.length, isAtBottom]); // Keep isAtBottom dependency
+
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
     const atBottom = scrollHeight - scrollTop - clientHeight < 50; 
     
@@ -177,18 +188,6 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
   };
 
   React.useEffect(() => {
-    if (lastMessageRef.current && isAtBottom) {
-      setTimeout(() => { 
-        lastMessageRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'end'
-        });
-      }, 100);
-    }
-  }, [chatHistory.length, isAtBottom]);
-
-
-  React.useEffect(() => {
     if (chatHistory.length === 0) {
       setIsAtBottom(true);
       setShowScrollButton(false);
@@ -197,7 +196,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
 
 
   return (
-     <Card className="shadow-lg flex flex-col max-h-[calc(100vh-220px)] sm:max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-150px)] overflow-hidden">
+     <Card className="shadow-lg flex flex-col max-h-[calc(100vh-170px)] sm:max-h-[calc(100vh-150px)] md:max-h-[calc(100vh-100px)] overflow-hidden">
       <CardHeader className="flex-shrink-0">
         <CardTitle className="font-headline text-2xl text-primary flex items-center">
           <Icons.AIMentor className="mr-2 h-7 w-7" /> AI Mentor
@@ -231,7 +230,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         {recommendations.length > 0 && (
           <div className="flex flex-col space-y-4 pt-4 min-h-0 flex-shrink-0"> 
             <h3 className="font-headline text-xl text-foreground flex-shrink-0">Recommended Problems:</h3>
-            <div className="flex-1 min-h-0"> 
+            <div className="flex-1 min-h-0">
                 <ScrollArea className="h-full max-h-52 rounded-md border p-1" type="auto"> 
                 <Accordion type="single" collapsible className="w-full">
                     {recommendations.map((rec, index) => (
@@ -432,3 +431,4 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
     </Card>
   );
 }
+
