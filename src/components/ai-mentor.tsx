@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area'; // Still needed for Recommendations Accordion
 import { useToast } from '@/hooks/use-toast';
 import type { SolvedProblem, Recommendation as RecommendationType, ProblemType as AppProblemType, ChatInput, ChatOutput, ChatMessage } from '@/types';
 import { ProblemTypeEnum } from '@/types';
@@ -124,14 +124,14 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
     setIsChatting(true);
     const newMessage: ChatMessage = { role: 'user', content: chatInput.trim() };
     
-    setIsAtBottom(true); 
+    setIsAtBottom(true); // Assume we want to scroll after sending a message
     setChatHistory(prev => [...prev, newMessage]);
     setChatInput('');
     
 
     try {
-      const currentHistoryForFlow = [...chatHistory, newMessage];
-      const flowHistory = currentHistoryForFlow.slice(0, -1); 
+      const currentHistoryForFlow = [...chatHistory, newMessage]; // Includes the new user message for context
+      const flowHistory = currentHistoryForFlow.slice(0, -1); // History for flow is up to the last model message
       const input: ChatInput = { 
         message: newMessage.content, 
         history: flowHistory,
@@ -157,44 +157,32 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    const atBottomThreshold = 10; 
-    const currentlyAtBottom = scrollHeight - scrollTop - clientHeight < atBottomThreshold;
-
-    setIsAtBottom(currentlyAtBottom);
-    setShowScrollButton(!currentlyAtBottom && scrollHeight > clientHeight + atBottomThreshold);
+    const atBottom = scrollHeight - scrollTop - clientHeight < 50; // Threshold for being at bottom
+    
+    setIsAtBottom(atBottom);
+    setShowScrollButton(!atBottom && chatHistory.length > 0);
   };
 
   const scrollToBottom = () => {
     if(lastMessageRef.current) {
-       requestAnimationFrame(() => {
-         lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-       });
+       // Using native scrollIntoView on the last message element
+       lastMessageRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
     setIsAtBottom(true);
     setShowScrollButton(false);
   };
 
- React.useEffect(() => {
-    const lastMessage = chatHistory.length > 0 ? chatHistory[chatHistory.length - 1] : null;
-
-    if (lastMessageRef.current) {
-      if ((lastMessage && lastMessage.role === 'user') || (lastMessage && lastMessage.role === 'model' && isAtBottom)) {
-        requestAnimationFrame(() => {
-          lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  React.useEffect(() => {
+    if (lastMessageRef.current && isAtBottom) {
+      setTimeout(() => { // Delay to ensure DOM update
+        lastMessageRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'end'
         });
-      }
+      }, 100);
     }
-     
-     if (chatContainerRef.current) {
-      const scrollContainer = chatContainerRef.current;
-      const { scrollHeight, clientHeight, scrollTop } = scrollContainer;
-      const currentlyAtBottom = scrollHeight - scrollTop - clientHeight < 10;
-      setShowScrollButton(!currentlyAtBottom && scrollHeight > clientHeight + 10);
-    } else {
-        setShowScrollButton(false); 
-    }
+  }, [chatHistory.length, isAtBottom]); // Rerun when message count changes or isAtBottom changes
 
-  }, [chatHistory, isAtBottom]); 
 
   React.useEffect(() => {
     if (chatHistory.length === 0) {
@@ -239,7 +227,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         {recommendations.length > 0 && (
           <div className="space-y-4 pt-4">
             <h3 className="font-headline text-xl text-foreground">Recommended Problems:</h3>
-            <ScrollArea className="h-[250px] rounded-md border p-1">
+            <ScrollArea className="h-[250px] rounded-md border p-1"> {/* ScrollArea for recommendations */}
               <Accordion type="single" collapsible className="w-full">
                 {recommendations.map((rec, index) => (
                   <AccordionItem value={`item-${index}`} key={index}>
@@ -285,12 +273,11 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         <h3 className="font-headline text-xl text-foreground flex items-center">
           <BotIcon className="mr-2 h-6 w-6" /> Chat with Mentor
         </h3>
-        {/* Chat messages area */}
-        <ScrollArea
-          type="auto"
-          className="border rounded-md p-2 md:p-4 bg-muted/20 flex-1 min-h-0 overflow-hidden" 
+        {/* Chat messages area - Replaced ScrollArea with a div */}
+        <div
+          className="border rounded-md p-2 md:p-4 bg-muted/20 flex-1 min-h-0 overflow-y-auto"
           ref={chatContainerRef}
-          onScrollCapture={handleScroll}
+          onScroll={handleScroll}
         >
           <div className="space-y-3 md:space-y-4">
             {chatHistory.map((msg, index) => (
@@ -407,7 +394,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
         {/* Chat input section */}
         <div className="flex items-center space-x-2 pt-1 md:pt-2">
           <Textarea
@@ -443,4 +430,3 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
     </Card>
   );
 }
-
