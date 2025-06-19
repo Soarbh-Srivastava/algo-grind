@@ -36,14 +36,16 @@ export function useAppData() {
         const docSnap = await getDoc(dataDocRef);
         if (docSnap.exists()) {
           let parsedData = docSnap.data() as AppData;
+          let shouldUpdateFirestore = false;
           
-          parsedData.goalSettings = parsedData.goalSettings || getDefaultGoalSettings();
-          if (!parsedData.goalSettings.goals || parsedData.goalSettings.goals.length === 0) {
+          // Initialize goalSettings if missing or incomplete
+          if (!parsedData.goalSettings || !parsedData.goalSettings.goals || parsedData.goalSettings.goals.length === 0) {
               parsedData.goalSettings = getDefaultGoalSettings();
+              shouldUpdateFirestore = true; // Mark for update if goals were reset
           } else {
               const currentCategoryIds = new Set(parsedData.goalSettings.goals.map(g => g.categoryId));
               const defaultGoals = getDefaultGoalSettings().goals;
-              let goalsUpdated = false;
+              let goalsModified = false;
               for (const defaultGoal of defaultGoals) {
                   if (!currentCategoryIds.has(defaultGoal.categoryId)) {
                       const categoryInfo = GOAL_CATEGORIES.find(cat => cat.id === defaultGoal.categoryId);
@@ -51,28 +53,59 @@ export function useAppData() {
                           categoryId: defaultGoal.categoryId,
                           target: categoryInfo ? categoryInfo.defaultTarget : 0,
                       });
-                      goalsUpdated = true;
+                      goalsModified = true;
                   }
               }
               // Ensure all existing goals are in GOAL_CATEGORIES, remove if not
+              const originalLength = parsedData.goalSettings.goals.length;
               parsedData.goalSettings.goals = parsedData.goalSettings.goals.filter(g => 
                 GOAL_CATEGORIES.some(cat => cat.id === g.categoryId)
               );
-              if (parsedData.goalSettings.goals.length !== GOAL_CATEGORIES.length && !goalsUpdated) {
-                // If counts don't match and we haven't just added, might be stale, reset
+              if (parsedData.goalSettings.goals.length !== originalLength) {
+                goalsModified = true;
+              }
+
+              if (parsedData.goalSettings.goals.length !== GOAL_CATEGORIES.length && !goalsModified) {
                 parsedData.goalSettings = getDefaultGoalSettings();
+                goalsModified = true;
+              }
+              if (goalsModified) {
+                shouldUpdateFirestore = true;
               }
           }
           if (!parsedData.goalSettings.period) {
               parsedData.goalSettings.period = getDefaultGoalSettings().period;
+              shouldUpdateFirestore = true;
           }
 
-          parsedData.solvedProblems = (parsedData.solvedProblems || []).map(p => ({
-            ...p,
-            isForReview: p.isForReview ?? false,
-          }));
+          // Initialize solvedProblems if missing or ensure isForReview exists
+          if (typeof parsedData.solvedProblems === 'undefined') {
+            parsedData.solvedProblems = [];
+            shouldUpdateFirestore = true; // Mark to add solvedProblems field in Firestore
+          } else {
+            parsedData.solvedProblems = parsedData.solvedProblems.map(p => ({
+              ...p,
+              isForReview: p.isForReview ?? false,
+            }));
+          }
+          
+          setAppData(parsedData); // Set local state immediately
 
-          setAppData(parsedData);
+          if (shouldUpdateFirestore) {
+            // If any part of the data was missing or needed correction, update Firestore.
+            // This ensures the Firestore document mirrors the well-formed AppData.
+            // We update the whole document fields that might have been initialized.
+            const updatePayload: Partial<AppData> = {};
+            if (parsedData.goalSettings) updatePayload.goalSettings = parsedData.goalSettings;
+            if (typeof docSnap.data().solvedProblems === 'undefined') {
+                 updatePayload.solvedProblems = []; // Explicitly add empty array if it was missing
+            }
+            // Only update if there's something to update
+            if (Object.keys(updatePayload).length > 0) {
+                 await updateDoc(dataDocRef, updatePayload);
+            }
+          }
+
         } else {
           // No data in Firestore, initialize with defaults and save
           const defaultData = getDefaultAppData();
@@ -81,31 +114,24 @@ export function useAppData() {
         }
       } catch (error: any) {
         console.error("Failed to load or initialize data from Firestore:", error);
-        // More specific logging for permission errors
         if (error.code === 'permission-denied' || 
             (error.message && error.message.toLowerCase().includes("permission denied")) || 
             (error.message && error.message.toLowerCase().includes("insufficient permissions")) ||
             (error.message && error.message.toLowerCase().includes("missing or insufficient permissions"))) {
           console.error(
-            "CRITICAL: Firestore Permission Denied. This means your Firestore security rules are blocking access. " +
-            "Please go to your Firebase project console -> Firestore Database -> Rules tab. " +
-            `Ensure your rules allow read/write access to the '${FIRESTORE_COLLECTION_ID}/${FIRESTORE_DOCUMENT_ID}' document for unauthenticated users.` +
-            "A common rule for this scenario is:\n" +
+            "CRITICAL: Firestore Permission Denied. Ensure your Firestore security rules allow read/write access " +
+            `to the '${FIRESTORE_COLLECTION_ID}/${FIRESTORE_DOCUMENT_ID}' document for unauthenticated users. Example:\n` +
             "rules_version = '2';\n" +
             "service cloud.firestore {\n" +
             "  match /databases/{database}/documents {\n" +
             `    match /${FIRESTORE_COLLECTION_ID}/${FIRESTORE_DOCUMENT_ID} {\n` +
             "      allow read, write: if true;\n" +
             "    }\n" +
-            "    // Optionally, restrict all other paths if this is your only public document:\n"+
-            "    // match /{document=**} {\n" +
-            "    //   allow read, write: if false;\n" +
-            "    // }\n" +
             "  }\n" +
             "}"
           );
         }
-        setAppData(getDefaultAppData()); // Fallback to default in-memory data on error
+        setAppData(getDefaultAppData());
       } finally {
         setIsInitialized(true);
         setIsLoadingStorage(false);
@@ -113,7 +139,7 @@ export function useAppData() {
     }
     loadData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // dataDocRef is stable if db is stable, which it should be.
+  }, []); 
 
   const addSolvedProblem = useCallback(async (problem: Omit<SolvedProblem, 'id'>) => {
     const newProblem: SolvedProblem = { ...problem, id: crypto.randomUUID(), isForReview: problem.isForReview ?? false };
@@ -127,7 +153,6 @@ export function useAppData() {
       }));
     } catch (error) {
       console.error("Failed to add problem to Firestore:", error);
-      // Optionally handle UI feedback for error
     }
   }, [dataDocRef]);
 
@@ -207,7 +232,7 @@ export function useAppData() {
   return {
     appData,
     isInitialized,
-    isLoading: isLoadingStorage, // Renamed for clarity from isLoadingStorage
+    isLoading: isLoadingStorage,
     addSolvedProblem,
     updateSolvedProblem,
     removeSolvedProblem,
