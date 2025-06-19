@@ -61,7 +61,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
 
   const handleGetRecommendations = async () => {
     setIsLoadingRecommendations(true);
-    // setRecommendations([]); // Intentionally not clearing immediately to avoid UI flash if that's preferred
+    // setRecommendations([]); // Keep previous recommendations visible while loading new ones
 
     const aiSolvedProblems = solvedProblems
       .map(p => {
@@ -82,12 +82,12 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         title: "No Compatible Problems",
         description: "None of your solved problems have types recognized by the AI for recommendations. Log more problems with standard types.",
       });
-      setRecommendations([]); // Clear if input is invalid
+      setRecommendations([]); 
       setIsLoadingRecommendations(false);
       return;
     }
      if (solvedProblems.length === 0 && aiSolvedProblems.length === 0) {
-        setRecommendations([]); // Clear if no problems to base on
+        setRecommendations([]); 
      }
 
 
@@ -162,7 +162,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
 
  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    const atBottom = scrollHeight - scrollTop - clientHeight < 50; // Threshold for being at bottom
+    const atBottom = scrollHeight - scrollTop - clientHeight < 50; 
     
     setIsAtBottom(atBottom);
     setShowScrollButton(!atBottom && chatHistory.length > 0);
@@ -198,7 +198,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
 
   return (
      <Card className="shadow-lg flex flex-col max-h-[calc(100vh-220px)] sm:max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-150px)] overflow-hidden">
-      <CardHeader>
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="font-headline text-2xl text-primary flex items-center">
           <Icons.AIMentor className="mr-2 h-7 w-7" /> AI Mentor
         </CardTitle>
@@ -207,7 +207,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 flex-shrink-0">
         {solvedProblems.length === 0 && !isLoadingRecommendations && recommendations.length === 0 && (
            <Alert variant="default" className="bg-accent/20 border-accent/50">
             <Lightbulb className="h-5 w-5 text-accent" />
@@ -217,7 +217,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
             </AlertDescription>
           </Alert>
         )}
-        <Button onClick={handleGetRecommendations} disabled={isLoadingRecommendations || solvedProblems.length === 0} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+        <Button onClick={handleGetRecommendations} disabled={isLoadingRecommendations || solvedProblems.length === 0} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground flex-shrink-0">
           {isLoadingRecommendations ? (
             <>
               <Icons.Logo className="mr-2 h-5 w-5 animate-spin" />
@@ -229,10 +229,10 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         </Button>
 
         {recommendations.length > 0 && (
-          <div className="flex flex-col space-y-4 pt-4 min-h-0">
+          <div className="flex flex-col space-y-4 pt-4 min-h-0 flex-shrink-0"> 
             <h3 className="font-headline text-xl text-foreground flex-shrink-0">Recommended Problems:</h3>
-            <div className="flex-1 min-h-0">
-                <ScrollArea className="h-full max-h-[250px] rounded-md border p-1" type="auto"> {/* Ensure max-h is also reasonable */}
+            <div className="flex-1 min-h-0"> 
+                <ScrollArea className="h-full max-h-52 rounded-md border p-1" type="auto"> 
                 <Accordion type="single" collapsible className="w-full">
                     {recommendations.map((rec, index) => (
                     <AccordionItem value={`item-${index}`} key={index}>
@@ -272,7 +272,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
         )}
       </CardContent>
 
-      <Separator className="my-2 md:my-4" />
+      <Separator className="my-2 md:my-4 flex-shrink-0" />
 
       <CardContent className="flex-1 flex flex-col space-y-2 md:space-y-4 overflow-hidden pt-0 min-h-0">
         <h3 className="font-headline text-xl text-foreground flex items-center flex-shrink-0">
