@@ -1,13 +1,14 @@
 
 // src/hooks/use-app-data.ts
 import { useState, useEffect, useCallback } from 'react';
-import type { AppData, SolvedProblem, GoalSettings } from '@/types';
+import type { AppData, SolvedProblem, GoalSettings, UserPublicProfile } from '@/types';
 import { GOAL_CATEGORIES } from '@/lib/constants';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, type DocumentReference, type DocumentData } from 'firebase/firestore';
-import { useAuth } from '@/context/auth-context'; // Import useAuth
+import { useAuth } from '@/context/auth-context';
 
 const FIRESTORE_COLLECTION_ID = 'appData';
+const USER_PUBLIC_PROFILES_COLLECTION = 'userPublicProfiles';
 
 const getDefaultGoalSettings = (): GoalSettings => ({
   period: 'daily',
@@ -15,7 +16,7 @@ const getDefaultGoalSettings = (): GoalSettings => ({
     categoryId: category.id,
     target: category.defaultTarget,
   })),
-  defaultCodingLanguage: 'javascript', // Default language
+  defaultCodingLanguage: 'javascript',
 });
 
 const getDefaultAppData = (): AppData => ({
@@ -23,8 +24,37 @@ const getDefaultAppData = (): AppData => ({
   goalSettings: getDefaultGoalSettings(),
 });
 
+async function syncUserPublicProfileData(
+  userUid: string,
+  displayName: string | null,
+  photoURL: string | null,
+  solvedProblemsCount: number
+) {
+  const profileDocRef = doc(db, USER_PUBLIC_PROFILES_COLLECTION, userUid);
+  try {
+    const docSnap = await getDoc(profileDocRef);
+    const updateData: Partial<UserPublicProfile> = {
+      userId: userUid,
+      displayName: displayName || "Anonymous Grinder",
+      photoURL: photoURL,
+      solvedProblemsCount: solvedProblemsCount,
+      lastUpdated: new Date().toISOString(),
+    };
+
+    if (docSnap.exists()) {
+      await updateDoc(profileDocRef, updateData);
+    } else {
+      // If profile doesn't exist, create it (this might also be handled by auth context, but good to have a fallback)
+      await setDoc(profileDocRef, updateData);
+    }
+  } catch (error) {
+    console.error("Error syncing user public profile data:", error);
+  }
+}
+
+
 export function useAppData() {
-  const { currentUser, loading: authLoading } = useAuth(); // Get currentUser
+  const { currentUser, loading: authLoading } = useAuth();
   const [appData, setAppData] = useState<AppData>(getDefaultAppData());
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoadingStorage, setIsLoadingStorage] = useState(true);
@@ -35,7 +65,6 @@ export function useAppData() {
       const docRef = doc(db, FIRESTORE_COLLECTION_ID, currentUser.uid);
       setDataDocRef(docRef);
     } else if (!currentUser && !authLoading) {
-      // User is not logged in, reset app data and stop loading.
       setAppData(getDefaultAppData());
       setIsInitialized(true);
       setIsLoadingStorage(false);
@@ -45,9 +74,9 @@ export function useAppData() {
 
   useEffect(() => {
     if (!dataDocRef || !currentUser) {
-      if (!authLoading) { // Only set loading to false if auth is also done loading
+      if (!authLoading) {
         setIsLoadingStorage(false);
-        setIsInitialized(true); // Mark as initialized even if no user
+        setIsInitialized(true);
       }
       return;
     }
@@ -56,6 +85,7 @@ export function useAppData() {
       setIsLoadingStorage(true);
       try {
         const docSnap = await getDoc(dataDocRef);
+        let currentAppData: AppData;
         if (docSnap.exists()) {
           let parsedData = docSnap.data() as AppData;
           let shouldUpdateFirestore = false;
@@ -64,7 +94,6 @@ export function useAppData() {
               parsedData.goalSettings = getDefaultGoalSettings();
               shouldUpdateFirestore = true; 
           } else {
-              // Ensure all default categories are present
               const currentCategoryIds = new Set(parsedData.goalSettings.goals.map(g => g.categoryId));
               const defaultGoals = getDefaultGoalSettings().goals;
               let goalsModified = false;
@@ -78,7 +107,6 @@ export function useAppData() {
                       goalsModified = true;
                   }
               }
-              // Remove any goals for categories that no longer exist
               const originalLength = parsedData.goalSettings.goals.length;
               parsedData.goalSettings.goals = parsedData.goalSettings.goals.filter(g => 
                 GOAL_CATEGORIES.some(cat => cat.id === g.categoryId)
@@ -86,7 +114,6 @@ export function useAppData() {
               if (parsedData.goalSettings.goals.length !== originalLength) {
                 goalsModified = true;
               }
-
               if (parsedData.goalSettings.goals.length !== GOAL_CATEGORIES.length && !goalsModified) {
                 parsedData.goalSettings = getDefaultGoalSettings(); 
                 goalsModified = true;
@@ -99,13 +126,10 @@ export function useAppData() {
               parsedData.goalSettings.period = getDefaultGoalSettings().period;
               shouldUpdateFirestore = true;
           }
-          // Initialize defaultCodingLanguage if missing
           if (typeof parsedData.goalSettings.defaultCodingLanguage === 'undefined') {
             parsedData.goalSettings.defaultCodingLanguage = getDefaultGoalSettings().defaultCodingLanguage;
             shouldUpdateFirestore = true;
           }
-
-
           if (typeof parsedData.solvedProblems === 'undefined' || !Array.isArray(parsedData.solvedProblems)) {
             parsedData.solvedProblems = []; 
             shouldUpdateFirestore = true;
@@ -116,39 +140,32 @@ export function useAppData() {
               isForReview: p.isForReview ?? false,
             }));
           }
-          
+          currentAppData = parsedData;
           setAppData(parsedData);
 
           if (shouldUpdateFirestore) {
             const updatePayload: Partial<AppData> = {};
             if (parsedData.goalSettings) updatePayload.goalSettings = parsedData.goalSettings;
             if (parsedData.solvedProblems) updatePayload.solvedProblems = parsedData.solvedProblems; 
-
             if (Object.keys(updatePayload).length > 0) {
                  await updateDoc(dataDocRef, updatePayload);
             }
           }
-
         } else {
-          const defaultData = getDefaultAppData();
-          await setDoc(dataDocRef, defaultData);
-          setAppData(defaultData);
+          currentAppData = getDefaultAppData();
+          await setDoc(dataDocRef, currentAppData);
+          setAppData(currentAppData);
         }
+        // Sync with public profile
+        await syncUserPublicProfileData(
+            currentUser.uid,
+            currentUser.displayName,
+            currentUser.photoURL,
+            currentAppData.solvedProblems.length
+        );
+
       } catch (error: any) {
         console.error("Failed to load or initialize data from Firestore:", error);
-         if (error.code === 'permission-denied' || (error.message && error.message.toLowerCase().includes("permission denied")) || (error.message && error.message.toLowerCase().includes("insufficient permissions"))) {
-          console.error(
-            "CRITICAL: Firestore Permission Denied. For multi-user setup, ensure your Firestore security rules are: \n" +
-            "rules_version = '2';\n" +
-            "service cloud.firestore {\n" +
-            "  match /databases/{database}/documents {\n" +
-            `    match /${FIRESTORE_COLLECTION_ID}/{userId} {\n` +
-            "      allow read, write: if request.auth != null && request.auth.uid == userId;\n" +
-            "    }\n" +
-            "  }\n" +
-            "}"
-          );
-        }
         setAppData(getDefaultAppData()); 
       } finally {
         setIsInitialized(true);
@@ -165,14 +182,16 @@ export function useAppData() {
       await updateDoc(dataDocRef, {
         solvedProblems: arrayUnion(newProblem)
       });
+      const newSolvedProblems = [...appData.solvedProblems, newProblem];
       setAppData(prev => ({
         ...prev,
-        solvedProblems: [...prev.solvedProblems, newProblem],
+        solvedProblems: newSolvedProblems,
       }));
+      await syncUserPublicProfileData(currentUser.uid, currentUser.displayName, currentUser.photoURL, newSolvedProblems.length);
     } catch (error) {
       console.error("Failed to add problem to Firestore:", error);
     }
-  }, [dataDocRef, currentUser]);
+  }, [dataDocRef, currentUser, appData.solvedProblems]);
 
   const updateSolvedProblem = useCallback(async (updatedProblem: SolvedProblem) => {
     if (!dataDocRef || !currentUser) return;
@@ -188,6 +207,8 @@ export function useAppData() {
           ...prev,
           solvedProblems: updatedProblems,
         }));
+        // Note: Problem count doesn't change on update, so no need to sync public profile unless other info changes.
+        // If problem content change could affect leaderboard (e.g. difficulty points), sync here.
       }
     } catch (error) {
       console.error("Failed to update problem in Firestore:", error);
@@ -205,21 +226,22 @@ export function useAppData() {
           await updateDoc(dataDocRef, {
             solvedProblems: arrayRemove(problemToRemove)
           });
+          const newSolvedProblems = appData.solvedProblems.filter(p => p.id !== problemId);
           setAppData(prev => ({
             ...prev,
-            solvedProblems: prev.solvedProblems.filter(p => p.id !== problemId),
+            solvedProblems: newSolvedProblems,
           }));
+          await syncUserPublicProfileData(currentUser.uid, currentUser.displayName, currentUser.photoURL, newSolvedProblems.length);
         }
       }
     } catch (error) {
       console.error("Failed to remove problem from Firestore:", error);
     }
-  }, [dataDocRef, currentUser]);
+  }, [dataDocRef, currentUser, appData.solvedProblems]);
 
   const updateGoalSettings = useCallback(async (settings: GoalSettings) => {
     if (!dataDocRef || !currentUser) return;
     try {
-      // Ensure defaultCodingLanguage is part of the settings being saved
       const settingsToSave: GoalSettings = {
         ...settings,
         defaultCodingLanguage: settings.defaultCodingLanguage || getDefaultGoalSettings().defaultCodingLanguage,

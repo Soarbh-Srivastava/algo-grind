@@ -67,7 +67,7 @@ export type ChatMessage = z.infer<typeof ChatMessageSchema>;
 export const ChatInputSchema = z.object({
   message: z.string().describe('The latest message from the user.'),
   history: z.array(ChatMessageSchema).optional().describe('The conversation history up to this point.'),
-  defaultCodingLanguage: z.string().optional().describe('The default coding language preferred by the user.'), // Added
+  defaultCodingLanguage: z.string().optional().describe('The default coding language preferred by the user.'),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
@@ -76,3 +76,11 @@ export const ChatOutputSchema = z.object({
 });
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
+// Leaderboard related type
+export interface UserPublicProfile {
+  userId: string;
+  displayName: string | null;
+  photoURL: string | null;
+  solvedProblemsCount: number;
+  lastUpdated: string; // ISO date string
+}

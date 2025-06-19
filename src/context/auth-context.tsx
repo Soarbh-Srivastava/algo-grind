@@ -1,3 +1,4 @@
+
 // src/context/auth-context.tsx
 "use client";
 
@@ -7,22 +8,59 @@ import {
   signOut as firebaseSignOut, 
   GoogleAuthProvider, 
   signInWithPopup,
-  signInWithEmailAndPassword, // Added for email sign-in
-  type User as FirebaseUser
+  signInWithEmailAndPassword,
+  type User as FirebaseUser,
+  createUserWithEmailAndPassword // Added for user creation to also update profile
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase'; // Added db
+import { doc, setDoc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore'; // Added Firestore functions
+import type { UserPublicProfile } from '@/types'; // Added UserPublicProfile type
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+
+const USER_PUBLIC_PROFILES_COLLECTION = 'userPublicProfiles';
 
 interface AuthContextType {
   currentUser: FirebaseUser | null;
   loading: boolean;
   logout: () => Promise<void>;
   signInWithGoogle: () => Promise<FirebaseUser | null>;
-  signInWithEmail: (email: string, pass: string) => Promise<FirebaseUser | null>; // Re-added
+  signInWithEmail: (email: string, pass: string) => Promise<FirebaseUser | null>;
+  // registerWithEmail: (email: string, pass: string) => Promise<FirebaseUser | null>; // Kept for consistency if needed by register-form directly
 }
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
+
+async function updateUserPublicProfile(user: FirebaseUser, initialProblemCount?: number) {
+  if (!user) return;
+  const profileDocRef = doc(db, USER_PUBLIC_PROFILES_COLLECTION, user.uid);
+  try {
+    const docSnap = await getDoc(profileDocRef);
+    const profileData: Partial<UserPublicProfile> = {
+      userId: user.uid,
+      displayName: user.displayName || user.email?.split('@')[0] || "Anonymous Grinder",
+      photoURL: user.photoURL,
+      lastUpdated: new Date().toISOString(),
+    };
+
+    if (!docSnap.exists()) {
+      // New user profile, set initial problem count if provided or default to 0
+      profileData.solvedProblemsCount = initialProblemCount ?? 0;
+      await setDoc(profileDocRef, profileData);
+    } else {
+      // Existing user, only update fields that might change via auth
+      // solvedProblemsCount is managed by useAppData
+      await updateDoc(profileDocRef, {
+        displayName: profileData.displayName,
+        photoURL: profileData.photoURL,
+        lastUpdated: profileData.lastUpdated,
+      });
+    }
+  } catch (error) {
+    console.error("Error updating user public profile:", error);
+    // Optionally, toast an error, but this is a background task
+  }
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = React.useState<FirebaseUser | null>(null);
@@ -31,17 +69,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter(); 
 
   React.useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
+      if (user) {
+        await updateUserPublicProfile(user); // Update public profile on auth state change
+      }
       setLoading(false);
-      // Solution 3: More robust redirect, can be enabled if needed
-      // const wasLoggedOut = !currentUser && loading; // Needs careful state management for 'wasLoggedOut'
-      // if (user && (window.location.pathname === '/login' || window.location.pathname === '/register')) {
-      //   router.push('/');
-      // }
     });
     return () => unsubscribe();
-  }, [router]); // Added router to dependency array if used in commented out section
+  }, []);
 
   const logout = async () => {
     try {
@@ -58,8 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      // Redirection for Google Sign-In will be handled by useEffect in pages
-      // toast({ title: "Signed In", description: "Successfully signed in with Google." }); // Toast handled by page redirection or form
+      // updateUserPublicProfile is called by onAuthStateChanged
       return result.user;
     } catch (error: any) {
       console.error("Error signing in with Google:", error);
@@ -81,22 +116,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-      // Toast and redirection are handled by the calling component or page effect
+      // updateUserPublicProfile is called by onAuthStateChanged
       return userCredential.user;
     } catch (error: any) {
       console.error("Error signing in with email from AuthContext:", error);
-      // Let the calling component handle the error message display
-      throw error; // Re-throw the error so the form can catch it
+      throw error;
     }
   };
-
+  
+  // Note: Registration logic in `register/actions.ts` already handles user creation.
+  // The onAuthStateChanged listener above will pick up new users and create their public profile.
 
   const value: AuthContextType = {
     currentUser,
     loading,
     logout,
     signInWithGoogle,
-    signInWithEmail, // Added back
+    signInWithEmail,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

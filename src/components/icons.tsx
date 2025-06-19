@@ -33,8 +33,9 @@ import {
   LogOut, 
   Mail,
   KeyRound,
-  Sun, // Added Sun icon
-  Moon, // Added Moon icon
+  Sun,
+  Moon,
+  Trophy, // Added Trophy icon
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import type { ProblemType } from '@/types';
@@ -70,8 +71,9 @@ export const Icons = {
   LogOut: (props: LucideProps) => <LogOut {...props} />, 
   Mail: (props: LucideProps) => <Mail {...props} />,
   Password: (props: LucideProps) => <KeyRound {...props} />,
-  Sun: (props: LucideProps) => <Sun {...props} />, // Added Sun icon
-  Moon: (props: LucideProps) => <Moon {...props} />, // Added Moon icon
+  Sun: (props: LucideProps) => <Sun {...props} />,
+  Moon: (props: LucideProps) => <Moon {...props} />,
+  Trophy: (props: LucideProps) => <Trophy {...props} />, // Added Trophy icon
   Logo: (props: LucideProps) => ( 
     <svg 
       xmlns="http://www.w3.org/2000/svg" 

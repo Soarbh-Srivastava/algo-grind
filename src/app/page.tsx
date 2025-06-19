@@ -10,6 +10,7 @@ import { GoalSetter } from '@/components/goal-setter';
 import { ProgressTracker } from '@/components/progress-tracker';
 import { ProgressVisualization } from '@/components/progress-visualization';
 import { AiMentor } from '@/components/ai-mentor';
+import { Leaderboard } from '@/components/leaderboard'; // Import Leaderboard
 import { useAppData } from '@/hooks/use-app-data';
 import { Icons } from '@/components/icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,7 +59,7 @@ export default function HomePage() {
       <AppHeader />
       <main className="flex-1 container mx-auto py-8 px-4">
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6 sticky top-[calc(theme(spacing.16)+1px)] bg-background/90 backdrop-blur-sm z-30 py-2 shadow-sm">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-6 sticky top-[calc(theme(spacing.16)+1px)] bg-background/90 backdrop-blur-sm z-30 py-2 shadow-sm">
             <TabsTrigger value="dashboard" className="font-headline text-base">
               <Icons.Dashboard className="mr-2 h-5 w-5" /> Dashboard
             </TabsTrigger>
@@ -70,6 +71,9 @@ export default function HomePage() {
             </TabsTrigger>
             <TabsTrigger value="mentor" className="font-headline text-base">
               <Icons.AIMentor className="mr-2 h-5 w-5" /> AI Mentor
+            </TabsTrigger>
+            <TabsTrigger value="leaderboard" className="font-headline text-base">
+              <Icons.Trophy className="mr-2 h-5 w-5" /> Leaderboard
             </TabsTrigger>
           </TabsList>
           
@@ -105,6 +109,9 @@ export default function HomePage() {
               solvedProblems={appData.solvedProblems} 
               defaultCodingLanguage={appData.goalSettings.defaultCodingLanguage}
             />
+          </TabsContent>
+          <TabsContent value="leaderboard">
+            <Leaderboard />
           </TabsContent>
         </Tabs>
       </main>
