@@ -271,10 +271,10 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                             }
                           }
                           return (
-                            <div className="my-2 w-full rounded-md border bg-card text-card-foreground relative text-[0.9em] overflow-x-auto">
+                            <div className="my-2 w-full rounded-md border bg-card text-card-foreground relative text-[0.9em]">
                               {lang && <div className="absolute top-1 right-2 text-xs text-muted-foreground select-none z-10">{lang}</div>}
                               <pre
-                                className={cn("p-3 pt-5 whitespace-pre", preClassName)}
+                                className={cn("p-3 pt-5 whitespace-pre overflow-x-auto", preClassName)}
                                 {...props}
                               >
                                 {children}
@@ -293,6 +293,7 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                               </code>
                             );
                           }
+                          // This is for code within a block (inside <pre>)
                           return (
                             <code className={cn("font-mono", className)} {...props}>
                               {children}
@@ -365,3 +366,4 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
     </Card>
   );
 }
+
