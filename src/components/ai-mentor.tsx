@@ -36,7 +36,7 @@ interface AiMentorProps {
 type FlowProblemType = z.infer<typeof ProblemTypeEnum>;
 
 const mapToAIProblemType = (type: AppProblemType): FlowProblemType | undefined => {
-  const validTypes = ProblemTypeEnum.options; // Corrected: Use .options
+  const validTypes = ProblemTypeEnum.options;
   if (validTypes.includes(type)) {
     return type as FlowProblemType;
   }
@@ -146,13 +146,15 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
   
   React.useEffect(() => {
     if (chatScrollAreaRef.current) {
-        const scrollElement = chatScrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
-        if (scrollElement) {
-            scrollElement.scrollTo({
-                top: scrollElement.scrollHeight,
-                behavior: 'smooth',
-            });
-        }
+      const viewportElement = chatScrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
+      if (viewportElement) {
+        requestAnimationFrame(() => {
+          viewportElement.scrollTo({
+            top: viewportElement.scrollHeight,
+            behavior: 'smooth',
+          });
+        });
+      }
     }
   }, [chatHistory]);
 
@@ -266,7 +268,6 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                        code({ node, inline, className, children, ...props }) {
                           const match = /language-(\w+)/.exec(className || '');
                           if (inline) {
-                            // For inline code, pass only className and children. Avoid spreading all props.
                             return (
                               <code className={cn("bg-foreground/10 text-foreground px-1 py-0.5 rounded text-[0.9em] font-mono relative break-words", className)}>
                                 {children}
@@ -274,7 +275,6 @@ export function AiMentor({ solvedProblems }: AiMentorProps) {
                             );
                           }
                           
-                          // For block code, it's generally safer to spread props to the <pre> or outer <div>
                           return match ? (
                             <div className="my-2 rounded-md border bg-card text-card-foreground p-0 relative text-[0.9em]">
                               {match[1] && <div className="absolute top-1 right-2 text-xs text-muted-foreground select-none">{match[1]}</div>}
