@@ -55,9 +55,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Error signing in with Google:", error);
       let errorMessage = "Failed to sign in with Google. Please try again.";
       if (error.code === 'auth/popup-closed-by-user') {
-        errorMessage = "Google Sign-In was cancelled.";
+        errorMessage = "Google Sign-In was cancelled. Please try again if this was unintentional.";
       } else if (error.code === 'auth/account-exists-with-different-credential') {
-        errorMessage = "An account already exists with this email address using a different sign-in method.";
+        errorMessage = "An account already exists with this email address using a different sign-in method (e.g., email/password). Try signing in with that method.";
+      } else if (error.code === 'auth/popup-blocked') {
+        errorMessage = "Google Sign-In popup was blocked by the browser. Please disable your popup blocker and try again.";
+      } else if (error.code === 'auth/operation-not-allowed') {
+        errorMessage = "Google Sign-In is not enabled for this project. Please contact support.";
+      } else if (error.code === 'auth/unauthorized-domain') {
+        // This specific error might not always be caught here as it can prevent the popup entirely.
+        // The primary fix is adding the domain in the Firebase console.
+        errorMessage = "This application's domain is not authorized for Google Sign-In. Please contact support.";
       }
       toast({
         variant: "destructive",
@@ -66,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       setLoading(false); // Ensure loading is set to false on error
     }
-    // setLoading(false) is handled by onAuthStateChanged in the success case
+    // setLoading(false) is handled by onAuthStateChanged in the success case or if an error above sets it
   };
 
   const value = {
