@@ -9,7 +9,7 @@ import { ProblemForm } from '@/components/problem-form';
 import { GoalSetter } from '@/components/goal-setter';
 import { ProgressTracker } from '@/components/progress-tracker';
 import { ProgressVisualization } from '@/components/progress-visualization';
-import { ProblemRecommendations } from '@/components/problem-recommendations';
+// import { ProblemRecommendations } from '@/components/problem-recommendations';
 import { CodingBuddy } from '@/components/coding-buddy'; // Import CodingBuddy
 import { Leaderboard } from '@/components/leaderboard';
 import { useAppData } from '@/hooks/use-app-data';
@@ -121,7 +121,6 @@ export default function HomePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-8">
                 <ProblemForm onAddProblem={addSolvedProblem} />
-                <ProblemRecommendations solvedProblems={appData.solvedProblems} />
               </div>
               <div className="lg:col-span-1 space-y-8">
                 <GoalSetter currentSettings={appData.goalSettings} onUpdateSettings={updateGoalSettings} />
