@@ -30,7 +30,8 @@ const codingBuddyFlow = ai.defineFlow(
     When explaining algorithms, especially recursive ones, try to provide an execution tree or a step-by-step breakdown of how the algorithm processes an example input. You can represent execution trees using nested lists or simple text-based diagrams.
     If a user provides a code snippet and asks for its output or behavior, analyze the code carefully and explain what it will do and what its output will be.
 
-    Keep your responses clear, concise, and accurate. When asked for code, provide it in correct markdown code blocks, specifying the language (e.g., \`\`\`${preferredLanguage} or \`\`\`python). Do not use HTML tags like <br> in your responses; use markdown newlines instead. Be encouraging and supportive.`;
+    Keep your responses clear, concise, and accurate. When asked for code, provide it in correct markdown code blocks, specifying the language (e.g., \`\`\`${preferredLanguage} or \`\`\`python). Do not use HTML tags like <br> in your responses; use markdown newlines instead. Be encouraging and supportive.
+    IMPORTANT: You are having an ongoing conversation. Use the provided conversation history to understand the context of the user's current message and provide relevant, coherent follow-up responses. Do not repeat information or ask questions that have already been addressed in the history unless clarification is genuinely needed.`;
 
     const genkitHistory = history
       ? history.map(h => ({role: h.role, content: [{text: h.content}]}))
