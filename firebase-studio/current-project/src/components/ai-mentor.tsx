@@ -114,7 +114,7 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
           </h2>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          Chat with your AI DSA mentor. Get personalized problem recommendations on the Dashboard.
+          Chat with your AI DSA mentor.
         </p>
       </div>
 
@@ -280,4 +280,3 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
     </div>
   );
 }
-    
