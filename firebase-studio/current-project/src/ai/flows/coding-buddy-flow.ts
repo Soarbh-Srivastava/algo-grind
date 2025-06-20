@@ -33,17 +33,17 @@ const codingBuddyFlow = ai.defineFlow(
     Keep your responses clear, concise, and accurate. When asked for code, provide it in correct markdown code blocks, specifying the language (e.g., \`\`\`${preferredLanguage} or \`\`\`python). Do not use HTML tags like <br> in your responses; use markdown newlines instead. Be encouraging and supportive.
     IMPORTANT: You are having an ongoing conversation. Use the provided conversation history to understand the context of the user's current message and provide relevant, coherent follow-up responses. Do not repeat information or ask questions that have already been addressed in the history unless clarification is genuinely needed.`;
 
+    // Ensure history is an array of {role, content: [{text}]} for Genkit
     const genkitHistory = history
       ? history.map(h => ({role: h.role, content: [{text: h.content}]}))
       : [];
 
     const {text} = await ai.generate({
-      prompt: message,
-      history: genkitHistory, // Correctly pass the processed history here
+      prompt: message, // The current user message
+      history: genkitHistory, // The conversation history BEFORE the current message
       system: systemPrompt,
     });
 
     return { response: text || "Sorry, I couldn't process that. Please try rephrasing." };
   }
 );
-
