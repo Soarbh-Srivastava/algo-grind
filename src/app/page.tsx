@@ -9,7 +9,7 @@ import { ProblemForm } from '@/components/problem-form';
 import { GoalSetter } from '@/components/goal-setter';
 import { ProgressTracker } from '@/components/progress-tracker';
 import { ProgressVisualization } from '@/components/progress-visualization';
-import { AiMentor } from '@/components/ai-mentor';
+// import { AiMentor } from '@/components/ai-mentor';
 import { Leaderboard } from '@/components/leaderboard';
 import { useAppData } from '@/hooks/use-app-data';
 import { Icons } from '@/components/icons';
@@ -145,12 +145,6 @@ export default function HomePage() {
             />
           </TabsContent>
 
-          <TabsContent value="mentor">
-            <AiMentor 
-              solvedProblems={appData.solvedProblems} 
-              defaultCodingLanguage={appData.goalSettings.defaultCodingLanguage}
-            />
-          </TabsContent>
           <TabsContent value="leaderboard">
             <Leaderboard />
           </TabsContent>

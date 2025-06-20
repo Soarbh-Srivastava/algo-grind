@@ -3,4 +3,4 @@ import { config } from 'dotenv';
 config();
 
 import '@/ai/flows/personalized-recommendations.ts';
-// import '@/ai/flows/chat-flow.ts'; // Removed chat flow import
+import '@/ai/flows/ai-chat-flow.ts'; // Import the new AI chat flow

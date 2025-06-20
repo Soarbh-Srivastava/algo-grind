@@ -23,7 +23,7 @@ export interface SolvedProblem {
   difficulty: Difficulty;
   url: string;
   dateSolved: string; // YYYY-MM-DD
-  isForReview?: boolean; // Added for review feature
+  isForReview?: boolean;
 }
 
 export interface Goal {
@@ -34,7 +34,7 @@ export interface Goal {
 export interface GoalSettings {
   goals: Goal[];
   period: 'daily' | 'weekly';
-  defaultCodingLanguage?: string; // Added default coding language
+  defaultCodingLanguage?: string;
 }
 
 export interface GoalCategory {
@@ -57,7 +57,25 @@ export interface Recommendation {
   reason: string;
 }
 
-// Chat-related schemas and types are removed
+// New AI Chat Mentor schemas and types
+export const AIChatMessageSchema = z.object({
+  role: z.enum(['user', 'model']).describe("The role of the message sender, either 'user' or 'model' (AI)."),
+  content: z.string().describe("The content of the chat message."),
+});
+export type AIChatMessage = z.infer<typeof AIChatMessageSchema>;
+
+export const AIChatInputSchema = z.object({
+  message: z.string().describe('The latest message from the user.'),
+  history: z.array(AIChatMessageSchema).optional().describe('The conversation history up to this point.'),
+  defaultCodingLanguage: z.string().optional().describe('The default coding language preferred by the user.'),
+});
+export type AIChatInput = z.infer<typeof AIChatInputSchema>;
+
+export const AIChatOutputSchema = z.object({
+  response: z.string().describe("The AI mentor's response message content."),
+});
+export type AIChatOutput = z.infer<typeof AIChatOutputSchema>;
+
 
 // Leaderboard related type
 export interface UserPublicProfile {
