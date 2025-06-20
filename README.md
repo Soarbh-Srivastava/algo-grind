@@ -55,9 +55,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👨‍💻 Author
 
-**[Your Name]**
+**[Soarbh Srivastava]**
 - Website: [whysoarbh.xyz](https://whysoarbh.xyz/)
-- GitHub: [@whysoarbh](https://github.com/whysoarbh)
 
 ## 🙏 Acknowledgments
 
