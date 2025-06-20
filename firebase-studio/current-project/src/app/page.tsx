@@ -9,7 +9,7 @@ import { ProblemForm } from '@/components/problem-form';
 import { GoalSetter } from '@/components/goal-setter';
 import { ProgressTracker } from '@/components/progress-tracker';
 import { ProgressVisualization } from '@/components/progress-visualization';
-import { ProblemRecommendations } from '@/components/problem-recommendations';
+import { ProblemRecommendations } from '@/components/problem-recommendations'; // Keep this for the dashboard
 import { Leaderboard } from '@/components/leaderboard';
 import { useAppData } from '@/hooks/use-app-data';
 import { Icons } from '@/components/icons';
@@ -46,6 +46,7 @@ export default function HomePage() {
     { value: "dashboard", label: "Dashboard", icon: Icons.Dashboard },
     { value: "log", label: "Problem Log", icon: Icons.Archive },
     { value: "analytics", label: "Analytics", icon: Icons.Analytics },
+    // { value: "mentor", label: "AI Mentor", icon: Icons.AIMentor }, // Removed AI Mentor tab
     { value: "leaderboard", label: "Leaderboard", icon: Icons.Trophy },
   ];
 
@@ -72,7 +73,6 @@ export default function HomePage() {
       <main className="flex-1 container mx-auto py-8 px-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           
-          {/* Mobile Hamburger Menu Trigger & Sheet */}
           <div className="md:hidden mb-4">
             <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
               <SheetTrigger asChild>
@@ -104,7 +104,6 @@ export default function HomePage() {
             </Sheet>
           </div>
 
-          {/* Desktop Tabs List */}
           <TabsList className="hidden md:grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 mb-6 md:sticky md:top-[calc(theme(spacing.16)+1px)] bg-background/90 backdrop-blur-sm z-30 py-2 shadow-sm">
             {tabsConfig.map((tab) => (
               <TabsTrigger 
@@ -145,6 +144,7 @@ export default function HomePage() {
             />
           </TabsContent>
 
+          {/* Removed Mentor Tab Content */}
           <TabsContent value="leaderboard">
             <Leaderboard />
           </TabsContent>

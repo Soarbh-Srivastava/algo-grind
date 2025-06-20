@@ -57,6 +57,8 @@ export interface Recommendation {
   reason: string;
 }
 
+// Chat-related schemas and types are removed
+
 // Leaderboard related type
 export interface UserPublicProfile {
   userId: string;

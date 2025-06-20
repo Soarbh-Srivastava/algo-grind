@@ -27,6 +27,7 @@ import {
   ChevronDown,
   ChevronUp,
   GoalIcon,
+  // Bot, // Removed Bot icon import
   Bookmark,
   User, 
   LogOut, 
@@ -35,7 +36,7 @@ import {
   Sun,
   Moon,
   Trophy,
-  Menu, // Added Menu icon
+  Menu,
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import type { ProblemType } from '@/types';
@@ -51,6 +52,7 @@ export const Icons = {
   Backtracking: (props: LucideProps) => <Undo2 {...props} />,
   Goal: (props: LucideProps) => <Target {...props} />,
   Analytics: (props: LucideProps) => <BarChart3 {...props} />,
+  // AIMentor: (props: LucideProps) => <Bot {...props} />, // Removed AIMentor icon
   GitHub: (props: LucideProps) => <Github {...props} />,
   Link: (props: LucideProps) => <LinkIcon {...props} />, 
   Calendar: (props: LucideProps) => <CalendarDays {...props} />,
@@ -73,7 +75,7 @@ export const Icons = {
   Sun: (props: LucideProps) => <Sun {...props} />,
   Moon: (props: LucideProps) => <Moon {...props} />,
   Trophy: (props: LucideProps) => <Trophy {...props} />,
-  Menu: (props: LucideProps) => <Menu {...props} />, 
+  Menu: (props: LucideProps) => <Menu {...props} />,
   Logo: (props: LucideProps) => ( 
     <svg 
       xmlns="http://www.w3.org/2000/svg" 
