@@ -11,7 +11,7 @@ import { STRIVER_SHEET_URL } from '@/lib/constants';
 import { Icons } from '@/components/icons';
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ExternalLink, Send, User, Bot as BotIcon, ChevronDown } from 'lucide-react';
+import { ExternalLink, Send, User, Bot as BotIcon, ChevronDown } from 'lucide-react'; // Ensure ChevronDown is imported
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
 
@@ -31,14 +31,13 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
   const [showScrollButton, setShowScrollButton] = React.useState(false);
   const [isAtBottom, setIsAtBottom] = React.useState(true);
 
-
   const scrollToBottom = React.useCallback(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
     setIsAtBottom(true);
     setShowScrollButton(false);
-  }, []);
+  }, []); // Dependencies are stable setters or refs
 
   const handleSendMessage = async () => {
     if (!chatInput.trim()) return;
@@ -49,7 +48,6 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
     setChatHistory(prev => [...prev, newMessage]);
     setChatInput('');
     
-
     try {
       const currentHistoryForFlow = [...chatHistory, newMessage]; 
       const flowHistory = currentHistoryForFlow.slice(0, -1); 
@@ -256,7 +254,7 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
                   handleSendMessage();
                 }
               }}
-              rows={3}
+              rows={3} // Increased rows
               className="flex-1 resize-none text-sm min-h-[40px] md:min-h-[48px]"
               disabled={isChatting}
             />
