@@ -25,14 +25,17 @@ interface ProblemRecommendationsProps {
   solvedProblems: SolvedProblem[];
 }
 
+// Helper to map app's ProblemType to the AI flow's expected Zod enum type
 type FlowProblemType = z.infer<typeof ProblemTypeEnum>;
 
 const mapToAIProblemType = (type: AppProblemType): FlowProblemType | undefined => {
   const validTypes = ProblemTypeEnum.options;
+  // Check if the app's problem type string is a valid option in the Zod enum
   if (validTypes.includes(type as FlowProblemType)) {
     return type as FlowProblemType;
   }
-  return undefined;
+  // console.warn(`Problem type "${type}" is not recognized by the AI flow. Skipping for recommendations.`);
+  return undefined; // Or handle as a generic type if the AI can manage it
 };
 
 export function ProblemRecommendations({ solvedProblems }: ProblemRecommendationsProps) {
@@ -43,40 +46,47 @@ export function ProblemRecommendations({ solvedProblems }: ProblemRecommendation
   const handleGetRecommendations = async () => {
     setIsLoadingRecommendations(true);
     
+    // Map SolvedProblem array to the format expected by the AI flow
     const aiSolvedProblems = solvedProblems
       .map(p => {
         const aiType = mapToAIProblemType(p.type);
-        if (!aiType) return null;
+        // Only include problems with types recognized by the AI flow
+        if (!aiType) return null; 
         return {
-          problemType: aiType,
+          problemType: aiType, // This is now correctly typed
           difficulty: p.difficulty,
           url: p.url,
         };
       })
-      .filter(p => p !== null) as PersonalizedRecommendationsInput['solvedProblems'];
+      .filter(p => p !== null) as PersonalizedRecommendationsInput['solvedProblems']; // Type assertion after filtering
 
     if (aiSolvedProblems.length === 0 && solvedProblems.length > 0) {
        toast({
         variant: "destructive",
-        title: "No Compatible Problems",
-        description: "None of your solved problems have types recognized by the AI for recommendations. Log more problems with standard types.",
+        title: "No Compatible Problems Logged",
+        description: "None of your solved problems have types currently recognized by the AI for generating recommendations. Try logging problems with standard types like 'array', 'string', 'dp', etc.",
       });
       setIsLoadingRecommendations(false);
       return;
     }
      if (solvedProblems.length === 0 && aiSolvedProblems.length === 0) {
+        // If no problems are logged at all, don't show the above error, just proceed.
+        // The AI will be informed that no problems are logged.
+        // We can clear existing recommendations here if desired.
         setRecommendations([]); 
      }
 
+
     const input: PersonalizedRecommendationsInput = {
-      solvedProblems: aiSolvedProblems,
+      solvedProblems: aiSolvedProblems, // Use the mapped and filtered problems
       striverSheetUrl: STRIVER_SHEET_URL,
+      // targetProblemTypes: [], // Optionally, add UI to select target types
     };
 
     try {
       const result: PersonalizedRecommendationsOutput = await getPersonalizedRecommendations(input);
       if (result.recommendations && result.recommendations.length > 0) {
-        setRecommendations(result.recommendations as RecommendationType[]);
+        setRecommendations(result.recommendations as RecommendationType[]); // Cast if necessary, though Zod schema should align
          toast({
           title: "Recommendations Ready!",
           description: "Your personalized problem suggestions are here.",
@@ -85,7 +95,7 @@ export function ProblemRecommendations({ solvedProblems }: ProblemRecommendation
         setRecommendations([]); 
         toast({
           title: "No Recommendations Yet",
-          description: "The AI couldn't generate specific recommendations at this time. Try solving more diverse problems!",
+          description: "The AI couldn't generate specific recommendations at this time. This can happen if the Striver sheet doesn't have suitable matches or if you've covered many areas. Try solving more diverse problems!",
         });
       }
     } catch (error) {
@@ -95,7 +105,7 @@ export function ProblemRecommendations({ solvedProblems }: ProblemRecommendation
         title: "AI Mentor Error",
         description: "Could not fetch recommendations. Please try again later.",
       });
-      setRecommendations([]);
+      setRecommendations([]); // Clear recommendations on error
     } finally {
       setIsLoadingRecommendations(false);
     }
@@ -106,13 +116,13 @@ export function ProblemRecommendations({ solvedProblems }: ProblemRecommendation
       <CardHeader>
         <CardTitle className="font-headline text-xl text-foreground">AI Problem Recommendations</CardTitle>
       </CardHeader>
-      <CardContent className="min-h-0">
+      <CardContent className="min-h-0"> {/* Adjusted for potential scroll within accordion */}
         {solvedProblems.length === 0 && !isLoadingRecommendations && recommendations.length === 0 && (
           <Alert variant="default" className="bg-accent/20 border-accent/50">
             <Lightbulb className="h-5 w-5 text-accent" />
             <AlertTitle className="font-headline text-accent">Log Your Progress First</AlertTitle>
             <AlertDescription className="text-accent/80">
-              Solve and log some problems to enable personalized recommendations.
+              Solve and log some problems to enable personalized recommendations from the AI mentor.
             </AlertDescription>
           </Alert>
         )}

@@ -57,7 +57,25 @@ export interface Recommendation {
   reason: string;
 }
 
-// AI Chat specific schemas and types removed
+// Chat-related schemas and types (re-added for Coding Buddy)
+export const ChatMessageSchema = z.object({
+  role: z.enum(['user', 'model']).describe("The role of the message sender, either 'user' or 'model' (AI)."),
+  content: z.string().describe("The content of the chat message."),
+});
+export type ChatMessage = z.infer<typeof ChatMessageSchema>;
+
+export const ChatInputSchema = z.object({
+  message: z.string().describe('The latest message from the user.'),
+  history: z.array(ChatMessageSchema).optional().describe('The conversation history up to this point.'),
+  defaultCodingLanguage: z.string().optional().describe('The default coding language preferred by the user.'),
+});
+export type ChatInput = z.infer<typeof ChatInputSchema>;
+
+export const ChatOutputSchema = z.object({
+  response: z.string().describe("The AI's response message content."),
+});
+export type ChatOutput = z.infer<typeof ChatOutputSchema>;
+
 
 export interface UserPublicProfile {
   userId: string;
@@ -66,3 +84,4 @@ export interface UserPublicProfile {
   solvedProblemsCount: number;
   lastUpdated: string; // ISO date string
 }
+
