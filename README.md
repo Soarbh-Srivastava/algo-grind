@@ -13,10 +13,10 @@ A comprehensive platform for algorithm practice and coding interview preparation
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: [Your frontend framework - React/Vue/Angular]
-- **Backend**: [Your backend technology - Node.js/Python/Java]
-- **Database**: [Your database - MongoDB/PostgreSQL/MySQL]
-- **Deployment**: [Your hosting platform - Vercel/Netlify/AWS]
+- **Frontend**: [Your frontend framework - Next.js]
+- **Backend**: [Your backend technology - Typescript]
+- **Database**: [Your database - firebase]
+- **Deployment**: [Your hosting platform - Vercel]
 
 ## 📚 Problem Categories
 
