@@ -36,7 +36,7 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-    setIsAtBottom(true); 
+    setIsAtBottom(true);
     setShowScrollButton(false);
   };
 
@@ -280,3 +280,5 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
     </div>
   );
 }
+
+    
