@@ -9,7 +9,7 @@ import { ProblemForm } from '@/components/problem-form';
 import { GoalSetter } from '@/components/goal-setter';
 import { ProgressTracker } from '@/components/progress-tracker';
 import { ProgressVisualization } from '@/components/progress-visualization';
-import { ProblemRecommendations } from '@/components/problem-recommendations'; // Ensure this import is correct
+import { ProblemRecommendations } from '@/components/problem-recommendations';
 import { CodingBuddy } from '@/components/coding-buddy';
 import { Leaderboard } from '@/components/leaderboard';
 import { useAppData } from '@/hooks/use-app-data';
@@ -93,7 +93,10 @@ export default function HomePage() {
                       <Button
                         variant={activeTab === tab.value ? "secondary" : "ghost"}
                         className="w-full justify-start text-left font-headline text-base h-12"
-                        onClick={() => setActiveTab(tab.value)}
+                        onClick={() => {
+                          setActiveTab(tab.value);
+                          setMobileSheetOpen(false);
+                        }}
                       >
                         <tab.icon className="mr-3 h-5 w-5" />
                         {tab.label}

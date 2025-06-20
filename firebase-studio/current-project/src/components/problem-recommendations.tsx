@@ -25,17 +25,14 @@ interface ProblemRecommendationsProps {
   solvedProblems: SolvedProblem[];
 }
 
-// Helper to map app's ProblemType to the AI flow's expected Zod enum type
 type FlowProblemType = z.infer<typeof ProblemTypeEnum>;
 
 const mapToAIProblemType = (type: AppProblemType): FlowProblemType | undefined => {
   const validTypes = ProblemTypeEnum.options;
-  // Check if the app's problem type string is a valid option in the Zod enum
   if (validTypes.includes(type as FlowProblemType)) {
     return type as FlowProblemType;
   }
-  // console.warn(`Problem type "${type}" is not recognized by the AI flow. Skipping for recommendations.`);
-  return undefined; // Or handle as a generic type if the AI can manage it
+  return undefined; 
 };
 
 export function ProblemRecommendations({ solvedProblems }: ProblemRecommendationsProps) {
@@ -46,19 +43,17 @@ export function ProblemRecommendations({ solvedProblems }: ProblemRecommendation
   const handleGetRecommendations = async () => {
     setIsLoadingRecommendations(true);
     
-    // Map SolvedProblem array to the format expected by the AI flow
     const aiSolvedProblems = solvedProblems
       .map(p => {
         const aiType = mapToAIProblemType(p.type);
-        // Only include problems with types recognized by the AI flow
         if (!aiType) return null; 
         return {
-          problemType: aiType, // This is now correctly typed
+          problemType: aiType,
           difficulty: p.difficulty,
           url: p.url,
         };
       })
-      .filter(p => p !== null) as PersonalizedRecommendationsInput['solvedProblems']; // Type assertion after filtering
+      .filter(p => p !== null) as PersonalizedRecommendationsInput['solvedProblems'];
 
     if (aiSolvedProblems.length === 0 && solvedProblems.length > 0) {
        toast({
@@ -70,23 +65,18 @@ export function ProblemRecommendations({ solvedProblems }: ProblemRecommendation
       return;
     }
      if (solvedProblems.length === 0 && aiSolvedProblems.length === 0) {
-        // If no problems are logged at all, don't show the above error, just proceed.
-        // The AI will be informed that no problems are logged.
-        // We can clear existing recommendations here if desired.
         setRecommendations([]); 
      }
 
-
     const input: PersonalizedRecommendationsInput = {
-      solvedProblems: aiSolvedProblems, // Use the mapped and filtered problems
+      solvedProblems: aiSolvedProblems,
       striverSheetUrl: STRIVER_SHEET_URL,
-      // targetProblemTypes: [], // Optionally, add UI to select target types
     };
 
     try {
       const result: PersonalizedRecommendationsOutput = await getPersonalizedRecommendations(input);
       if (result.recommendations && result.recommendations.length > 0) {
-        setRecommendations(result.recommendations as RecommendationType[]); // Cast if necessary, though Zod schema should align
+        setRecommendations(result.recommendations as RecommendationType[]);
          toast({
           title: "Recommendations Ready!",
           description: "Your personalized problem suggestions are here.",
@@ -105,7 +95,7 @@ export function ProblemRecommendations({ solvedProblems }: ProblemRecommendation
         title: "AI Mentor Error",
         description: "Could not fetch recommendations. Please try again later.",
       });
-      setRecommendations([]); // Clear recommendations on error
+      setRecommendations([]);
     } finally {
       setIsLoadingRecommendations(false);
     }
@@ -116,9 +106,9 @@ export function ProblemRecommendations({ solvedProblems }: ProblemRecommendation
       <CardHeader>
         <CardTitle className="font-headline text-xl text-foreground">AI Problem Recommendations</CardTitle>
       </CardHeader>
-      <CardContent className="min-h-0"> {/* Adjusted for potential scroll within accordion */}
+      <CardContent className="min-h-0">
         {solvedProblems.length === 0 && !isLoadingRecommendations && recommendations.length === 0 && (
-          <Alert variant="default" className="bg-accent/20 border-accent/50">
+          <Alert variant="default" className="bg-accent/20 border-accent/50 mb-4">
             <Lightbulb className="h-5 w-5 text-accent" />
             <AlertTitle className="font-headline text-accent">Log Your Progress First</AlertTitle>
             <AlertDescription className="text-accent/80">
@@ -146,7 +136,7 @@ export function ProblemRecommendations({ solvedProblems }: ProblemRecommendation
              <h3 className="font-headline text-base text-foreground">Recommended Problems:</h3>
               <Accordion type="single" collapsible className="w-full">
                 {recommendations.map((rec, index) => (
-                  <AccordionItem value={`${rec.problemName}-${index}`} key={`${rec.problemName}-${index}`}>
+                  <AccordionItem value={`${rec.problemName}-${index}`} key={`${rec.problemName}-${index}-${rec.url}`}>
                     <AccordionTrigger className="hover:no-underline px-3">
                       <div className="flex items-center space-x-3 text-left w-full">
                         {getIconForProblemType(rec.problemType, { className: "h-5 w-5 text-primary shrink-0" })}
@@ -183,4 +173,3 @@ export function ProblemRecommendations({ solvedProblems }: ProblemRecommendation
     </Card>
   );
 }
-    

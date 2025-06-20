@@ -33,7 +33,7 @@ const RecommendationSchema = z.object({
   problemType: ProblemTypeEnum.describe('The category of the recommended problem.'),
   problemName: z.string().describe('The name of the recommended problem.'),
   difficulty: z.enum(['easy', 'medium', 'hard']).describe('Difficulty of the problem'),
-  url: z.string().describe('URL of the recommended problem from Striver sheet.'), // Removed .url() as AI might generate non-standard "links" from text
+  url: z.string().describe('URL of the recommended problem from Striver sheet. This could be a direct LeetCode/GFG link if available on the sheet, or the Striver sheet URL itself as a fallback.'),
   reason: z.string().describe('Why this problem is being recommended')
 });
 

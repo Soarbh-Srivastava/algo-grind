@@ -57,7 +57,7 @@ export interface Recommendation {
   reason: string;
 }
 
-// Chat-related schemas and types (re-added for Coding Buddy)
+// Chat-related schemas and types (for Coding Buddy)
 export const ChatMessageSchema = z.object({
   role: z.enum(['user', 'model']).describe("The role of the message sender, either 'user' or 'model' (AI)."),
   content: z.string().describe("The content of the chat message."),
@@ -84,4 +84,3 @@ export interface UserPublicProfile {
   solvedProblemsCount: number;
   lastUpdated: string; // ISO date string
 }
-
