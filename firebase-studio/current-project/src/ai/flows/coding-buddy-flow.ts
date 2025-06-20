@@ -39,7 +39,7 @@ const codingBuddyFlow = ai.defineFlow(
 
     const {text} = await ai.generate({
       prompt: message,
-      history: genkitHistory,
+      history: genkitHistory, // Correctly pass the processed history here
       system: systemPrompt,
     });
 
