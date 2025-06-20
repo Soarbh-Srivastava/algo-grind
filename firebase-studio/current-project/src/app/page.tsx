@@ -105,7 +105,7 @@ export default function HomePage() {
             </Sheet>
           </div>
 
-          <TabsList className="hidden md:grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mb-6 md:sticky md:top-[calc(theme(spacing.16)+1px)] bg-background/90 backdrop-blur-sm z-30 py-2 shadow-sm"> {/* Adjusted grid-cols */}
+          <TabsList className="hidden md:grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 mb-6 md:sticky md:top-[calc(theme(spacing.16)+1px)] bg-background/90 backdrop-blur-sm z-30 py-2 shadow-sm"> {/* Adjusted grid-cols */}
             {tabsConfig.map((tab) => (
               <TabsTrigger
                 key={tab.value}
