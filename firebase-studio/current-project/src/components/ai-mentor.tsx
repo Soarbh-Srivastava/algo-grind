@@ -6,27 +6,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import type { ChatInput, ChatOutput, ChatMessage } from '@/types';
-// Removed ProblemTypeEnum and Recommendation related imports as they are moved
 import { chatWithMentor } from '@/ai/flows/chat-flow';
 import { STRIVER_SHEET_URL } from '@/lib/constants';
 import { Icons } from '@/components/icons';
-// Removed Badge, Alert, Accordion, Lightbulb related imports
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ExternalLink, Send, User, Bot as BotIcon, ChevronDown } from 'lucide-react';
-// Removed z and ProblemType related type imports
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
 
 interface AiMentorProps {
-  // solvedProblems prop removed
   defaultCodingLanguage?: string;
 }
 
-// mapToAIProblemType function removed as it's specific to recommendations
-
 export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
-  // recommendations and isLoadingRecommendations states removed
   const { toast } = useToast();
 
   const [chatInput, setChatInput] = React.useState('');
@@ -46,8 +39,6 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
     setIsAtBottom(true); 
     setShowScrollButton(false);
   };
-
-  // handleGetRecommendations function removed
 
   const handleSendMessage = async () => {
     if (!chatInput.trim()) return;
@@ -126,8 +117,6 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
           Chat with your AI DSA mentor. Get personalized problem recommendations on the Dashboard.
         </p>
       </div>
-
-      {/* Problem Recommendations Card removed */}
 
       <Card className="flex-1 flex flex-col min-h-0 overflow-hidden shadow-lg">
         <CardHeader className="flex-shrink-0">
@@ -291,3 +280,5 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
     </div>
   );
 }
+
+    

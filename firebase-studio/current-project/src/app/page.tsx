@@ -10,7 +10,7 @@ import { GoalSetter } from '@/components/goal-setter';
 import { ProgressTracker } from '@/components/progress-tracker';
 import { ProgressVisualization } from '@/components/progress-visualization';
 import { AiMentor } from '@/components/ai-mentor';
-import { ProblemRecommendations } from '@/components/problem-recommendations'; // Added import
+import { ProblemRecommendations } from '@/components/problem-recommendations';
 import { Leaderboard } from '@/components/leaderboard';
 import { useAppData } from '@/hooks/use-app-data';
 import { Icons } from '@/components/icons';
@@ -163,3 +163,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
