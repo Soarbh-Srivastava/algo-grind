@@ -23,7 +23,7 @@ export interface SolvedProblem {
   difficulty: Difficulty;
   url: string;
   dateSolved: string; // YYYY-MM-DD
-  isForReview?: boolean; // Added for review feature
+  isForReview?: boolean;
 }
 
 export interface Goal {
@@ -34,7 +34,7 @@ export interface Goal {
 export interface GoalSettings {
   goals: Goal[];
   period: 'daily' | 'weekly';
-  defaultCodingLanguage?: string; // Added default coding language
+  defaultCodingLanguage?: string;
 }
 
 export interface GoalCategory {
@@ -57,7 +57,7 @@ export interface Recommendation {
   reason: string;
 }
 
-// Chat-related schemas and types
+// Chat-related schemas and types (re-added for Coding Buddy)
 export const ChatMessageSchema = z.object({
   role: z.enum(['user', 'model']).describe("The role of the message sender, either 'user' or 'model' (AI)."),
   content: z.string().describe("The content of the chat message."),
@@ -72,11 +72,11 @@ export const ChatInputSchema = z.object({
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
 export const ChatOutputSchema = z.object({
-  response: z.string().describe("The AI mentor's response message content."),
+  response: z.string().describe("The AI's response message content."),
 });
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
-// Leaderboard related type
+
 export interface UserPublicProfile {
   userId: string;
   displayName: string | null;
@@ -84,3 +84,4 @@ export interface UserPublicProfile {
   solvedProblemsCount: number;
   lastUpdated: string; // ISO date string
 }
+

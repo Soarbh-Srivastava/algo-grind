@@ -9,7 +9,8 @@ import { ProblemForm } from '@/components/problem-form';
 import { GoalSetter } from '@/components/goal-setter';
 import { ProgressTracker } from '@/components/progress-tracker';
 import { ProgressVisualization } from '@/components/progress-visualization';
-// import { AiMentor } from '@/components/ai-mentor';
+import { ProblemRecommendations } from '@/components/problem-recommendations';
+import { CodingBuddy } from '@/components/coding-buddy'; // Import CodingBuddy
 import { Leaderboard } from '@/components/leaderboard';
 import { useAppData } from '@/hooks/use-app-data';
 import { Icons } from '@/components/icons';
@@ -22,8 +23,8 @@ export default function HomePage() {
   const router = useRouter();
   const {
     appData,
-    isInitialized: dataInitialized, 
-    isLoading: dataLoading, 
+    isInitialized: dataInitialized,
+    isLoading: dataLoading,
     addSolvedProblem,
     updateSolvedProblem,
     removeSolvedProblem,
@@ -46,7 +47,7 @@ export default function HomePage() {
     { value: "dashboard", label: "Dashboard", icon: Icons.Dashboard },
     { value: "log", label: "Problem Log", icon: Icons.Archive },
     { value: "analytics", label: "Analytics", icon: Icons.Analytics },
-    { value: "mentor", label: "AI Mentor", icon: Icons.AIMentor },
+    { value: "codingbuddy", label: "Coding Buddy", icon: Icons.CodingBuddy }, // Added Coding Buddy Tab
     { value: "leaderboard", label: "Leaderboard", icon: Icons.Trophy },
   ];
 
@@ -66,14 +67,13 @@ export default function HomePage() {
       </div>
     );
   }
-  
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
       <main className="flex-1 container mx-auto py-8 px-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          
-          {/* Mobile Hamburger Menu Trigger & Sheet */}
+
           <div className="md:hidden mb-4">
             <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
               <SheetTrigger asChild>
@@ -105,23 +105,23 @@ export default function HomePage() {
             </Sheet>
           </div>
 
-          {/* Desktop Tabs List */}
-          <TabsList className="hidden md:grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-6 md:sticky md:top-[calc(theme(spacing.16)+1px)] bg-background/90 backdrop-blur-sm z-30 py-2 shadow-sm">
+          <TabsList className="hidden md:grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-5 lg:grid-cols-5 mb-6 md:sticky md:top-[calc(theme(spacing.16)+1px)] bg-background/90 backdrop-blur-sm z-30 py-2 shadow-sm">
             {tabsConfig.map((tab) => (
-              <TabsTrigger 
-                key={tab.value} 
-                value={tab.value} 
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
                 className="font-headline text-sm md:text-base justify-start"
               >
                 <tab.icon className="mr-1 md:mr-2 h-4 w-4 md:h-5 md:w-5" /> {tab.label}
               </TabsTrigger>
             ))}
           </TabsList>
-          
+
           <TabsContent value="dashboard">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-8">
                 <ProblemForm onAddProblem={addSolvedProblem} />
+                <ProblemRecommendations solvedProblems={appData.solvedProblems} />
               </div>
               <div className="lg:col-span-1 space-y-8">
                 <GoalSetter currentSettings={appData.goalSettings} onUpdateSettings={updateGoalSettings} />
@@ -130,8 +130,8 @@ export default function HomePage() {
           </TabsContent>
 
           <TabsContent value="log">
-             <ProgressTracker 
-                solvedProblems={appData.solvedProblems} 
+             <ProgressTracker
+                solvedProblems={appData.solvedProblems}
                 onUpdateProblem={updateSolvedProblem}
                 onRemoveProblem={removeSolvedProblem}
                 toggleProblemReviewStatus={toggleProblemReviewStatus}
@@ -143,6 +143,10 @@ export default function HomePage() {
               solvedProblems={appData.solvedProblems}
               goalSettings={appData.goalSettings}
             />
+          </TabsContent>
+
+          <TabsContent value="codingbuddy"> {/* Content for Coding Buddy */}
+            <CodingBuddy />
           </TabsContent>
 
           <TabsContent value="leaderboard">
