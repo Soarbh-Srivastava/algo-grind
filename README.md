@@ -13,11 +13,10 @@ A comprehensive platform for algorithm practice and coding interview preparation
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: [Your frontend framework - Next.js]
-- **Backend**: [Your backend technology - Typescript]
-- **Database**: [Your database - firebase]
-- **Deployment**: [Your hosting platform - Vercel]
-
+- **Frontend**:  Next.js
+- **Backend**:  Typescript
+- **Database**: Firebase
+- **Deployment**: Vercel
 ## 📚 Problem Categories
 
 - Arrays and Strings
