@@ -57,6 +57,7 @@ export interface Recommendation {
   reason: string;
 }
 
+// AI Chat specific schemas and types
 export const AIChatMessageSchema = z.object({
   role: z.enum(['user', 'model']).describe("The role of the message sender, either 'user' or 'model' (AI)."),
   content: z.string().describe("The content of the chat message."),

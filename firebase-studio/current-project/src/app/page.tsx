@@ -10,7 +10,7 @@ import { GoalSetter } from '@/components/goal-setter';
 import { ProgressTracker } from '@/components/progress-tracker';
 import { ProgressVisualization } from '@/components/progress-visualization';
 import { ProblemRecommendations } from '@/components/problem-recommendations';
-import { AiChatMentor } from '@/components/ai-chat-mentor';
+import { AiChatMentor } from '@/components/ai-chat-mentor'; // Import the new chat component
 import { Leaderboard } from '@/components/leaderboard';
 import { useAppData } from '@/hooks/use-app-data';
 import { Icons } from '@/components/icons';
@@ -47,7 +47,7 @@ export default function HomePage() {
     { value: "dashboard", label: "Dashboard", icon: Icons.Dashboard },
     { value: "log", label: "Problem Log", icon: Icons.Archive },
     { value: "analytics", label: "Analytics", icon: Icons.Analytics },
-    { value: "mentor", label: "AI Mentor", icon: Icons.AIMentor },
+    { value: "mentor", label: "AI Mentor", icon: Icons.AIMentor }, // Added AI Mentor tab
     { value: "leaderboard", label: "Leaderboard", icon: Icons.Trophy },
   ];
 
@@ -145,7 +145,7 @@ export default function HomePage() {
             />
           </TabsContent>
 
-          <TabsContent value="mentor">
+          <TabsContent value="mentor"> {/* Added TabsContent for AI Mentor */}
             <AiChatMentor
               defaultCodingLanguage={appData.goalSettings.defaultCodingLanguage}
             />

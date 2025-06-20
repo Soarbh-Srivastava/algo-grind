@@ -10,7 +10,7 @@ import {
   Undo2,
   Target,
   BarChart3,
-  Bot, 
+  Bot, // Ensure Bot is imported for AIMentor
   Github,
   Link as LinkIcon,
   CalendarDays,
@@ -49,7 +49,7 @@ export const Icons = {
   Backtracking: (props: LucideProps) => <Undo2 {...props} />,
   Goal: (props: LucideProps) => <Target {...props} />,
   Analytics: (props: LucideProps) => <BarChart3 {...props} />,
-  AIMentor: (props: LucideProps) => <Bot {...props} />,
+  AIMentor: (props: LucideProps) => <Bot {...props} />, // AIMentor uses Bot icon
   GitHub: (props: LucideProps) => <Github {...props} />,
   Link: (props: LucideProps) => <LinkIcon {...props} />,
   Calendar: (props: LucideProps) => <CalendarDays {...props} />,
