@@ -47,7 +47,7 @@ export default function HomePage() {
     { value: "dashboard", label: "Dashboard", icon: Icons.Dashboard },
     { value: "log", label: "Problem Log", icon: Icons.Archive },
     { value: "analytics", label: "Analytics", icon: Icons.Analytics },
-    { value: "chat", label: "AI Chat", icon: Icons.AIChat }, // New AI Chat tab
+    { value: "mentor", label: "AI Mentor", icon: Icons.AIMentor }, // Updated Tab
     { value: "leaderboard", label: "Leaderboard", icon: Icons.Trophy },
   ];
 
@@ -145,7 +145,7 @@ export default function HomePage() {
             />
           </TabsContent>
 
-          <TabsContent value="chat"> {/* New AI Chat Tab Content */}
+          <TabsContent value="mentor"> {/* Updated Tab Content */}
             <AiChatMentor
               defaultCodingLanguage={appData.goalSettings.defaultCodingLanguage}
             />

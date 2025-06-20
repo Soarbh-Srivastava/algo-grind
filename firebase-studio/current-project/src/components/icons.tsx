@@ -10,7 +10,7 @@ import {
   Undo2,
   Target,
   BarChart3,
-  Bot, // Added Bot for AIChat
+  Bot, // Retain Bot for AIMentor
   Github,
   Link as LinkIcon,
   CalendarDays,
@@ -49,7 +49,7 @@ export const Icons = {
   Backtracking: (props: LucideProps) => <Undo2 {...props} />,
   Goal: (props: LucideProps) => <Target {...props} />,
   Analytics: (props: LucideProps) => <BarChart3 {...props} />,
-  AIChat: (props: LucideProps) => <Bot {...props} />, // New AI Chat icon
+  AIMentor: (props: LucideProps) => <Bot {...props} />, // Renamed from AIChat to AIMentor
   GitHub: (props: LucideProps) => <Github {...props} />,
   Link: (props: LucideProps) => <LinkIcon {...props} />,
   Calendar: (props: LucideProps) => <CalendarDays {...props} />,
