@@ -32,13 +32,13 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
   const [isAtBottom, setIsAtBottom] = React.useState(true);
 
 
-  const scrollToBottom = () => {
+  const scrollToBottom = React.useCallback(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
     setIsAtBottom(true);
     setShowScrollButton(false);
-  };
+  }, []);
 
   const handleSendMessage = async () => {
     if (!chatInput.trim()) return;
