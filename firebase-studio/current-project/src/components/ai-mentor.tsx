@@ -22,7 +22,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ScrollArea } from "@/components/ui/scroll-area"; 
+// ScrollArea is still used for chat, but not for recommendations list with this strategy
+// import { ScrollArea } from "@/components/ui/scroll-area"; 
 import { z } from 'zod';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
@@ -56,6 +57,7 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
   const chatContainerRef = React.useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = React.useState(false);
   const [isAtBottom, setIsAtBottom] = React.useState(true);
+
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
@@ -438,3 +440,5 @@ export function AiMentor({ solvedProblems, defaultCodingLanguage }: AiMentorProp
   );
 }
 
+
+    
