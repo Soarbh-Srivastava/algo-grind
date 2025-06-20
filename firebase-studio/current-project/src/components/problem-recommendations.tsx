@@ -106,7 +106,7 @@ export function ProblemRecommendations({ solvedProblems }: ProblemRecommendation
       <CardHeader>
         <CardTitle className="font-headline text-xl text-foreground">AI Problem Recommendations</CardTitle>
       </CardHeader>
-      <CardContent className="min-h-0"> {/* Removed max-h-72 and overflow-y-auto to allow natural flow or control by parent */}
+      <CardContent className="min-h-0">
         {solvedProblems.length === 0 && !isLoadingRecommendations && recommendations.length === 0 && (
           <Alert variant="default" className="bg-accent/20 border-accent/50">
             <Lightbulb className="h-5 w-5 text-accent" />
@@ -136,7 +136,7 @@ export function ProblemRecommendations({ solvedProblems }: ProblemRecommendation
              <h3 className="font-headline text-base text-foreground">Recommended Problems:</h3>
               <Accordion type="single" collapsible className="w-full">
                 {recommendations.map((rec, index) => (
-                  <AccordionItem value={rec.problemName} key={`${rec.problemName}-${index}`}>
+                  <AccordionItem value={`${rec.problemName}-${index}`} key={`${rec.problemName}-${index}`}>
                     <AccordionTrigger className="hover:no-underline px-3">
                       <div className="flex items-center space-x-3 text-left w-full">
                         {getIconForProblemType(rec.problemType, { className: "h-5 w-5 text-primary shrink-0" })}
