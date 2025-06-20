@@ -9,8 +9,8 @@ import { ProblemForm } from '@/components/problem-form';
 import { GoalSetter } from '@/components/goal-setter';
 import { ProgressTracker } from '@/components/progress-tracker';
 import { ProgressVisualization } from '@/components/progress-visualization';
-import { ProblemRecommendations } from '@/components/problem-recommendations';
-import { CodingBuddy } from '@/components/coding-buddy'; // Import CodingBuddy
+import { ProblemRecommendations } from '@/components/problem-recommendations'; // Ensure this import is correct
+import { CodingBuddy } from '@/components/coding-buddy';
 import { Leaderboard } from '@/components/leaderboard';
 import { useAppData } from '@/hooks/use-app-data';
 import { Icons } from '@/components/icons';
@@ -47,7 +47,7 @@ export default function HomePage() {
     { value: "dashboard", label: "Dashboard", icon: Icons.Dashboard },
     { value: "log", label: "Problem Log", icon: Icons.Archive },
     { value: "analytics", label: "Analytics", icon: Icons.Analytics },
-    { value: "codingbuddy", label: "Coding Buddy", icon: Icons.CodingBuddy }, 
+    { value: "codingbuddy", label: "Coding Buddy", icon: Icons.CodingBuddy },
     { value: "leaderboard", label: "Leaderboard", icon: Icons.Trophy },
   ];
 

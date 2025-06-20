@@ -173,5 +173,4 @@ export function ProblemRecommendations({ solvedProblems }: ProblemRecommendation
     </Card>
   );
 }
-
     
