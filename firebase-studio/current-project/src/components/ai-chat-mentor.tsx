@@ -12,7 +12,7 @@ import type { AIChatMessage, AIChatInput, AIChatOutput } from '@/types';
 import { chatWithAIChatMentor } from '@/ai/flows/ai-chat-flow';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
-import { Send, User as UserIcon, Bot as BotIcon } from 'lucide-react'; // Renamed Bot to BotIcon if Icons.Bot exists
+import { Send, User as UserIcon, Bot as BotIcon } from 'lucide-react';
 
 interface AiChatMentorProps {
   defaultCodingLanguage?: string;
@@ -46,14 +46,11 @@ export function AiChatMentor({ defaultCodingLanguage }: AiChatMentorProps) {
 
     setChatHistory(prev => [...prev, newMessage]);
     setChatInput('');
-    // Ensure scroll happens after state update for user message
     setTimeout(scrollToBottom, 0);
 
 
     try {
-      // Pass the complete history including the new user message for context
       const currentHistoryForFlow: AIChatMessage[] = [...chatHistory, newMessage];
-      // The actual 'history' for genkit is up to the message before the current user input
       const flowHistory = currentHistoryForFlow.slice(0, -1);
 
       const input: AIChatInput = {
@@ -75,7 +72,6 @@ export function AiChatMentor({ defaultCodingLanguage }: AiChatMentorProps) {
       setChatHistory(prev => [...prev, {role: 'model', content: "Sorry, I encountered an error. Please try again."}]);
     } finally {
       setIsChatting(false);
-      // Ensure scroll happens after AI response too
       setTimeout(scrollToBottom, 0);
     }
   };
@@ -84,9 +80,9 @@ export function AiChatMentor({ defaultCodingLanguage }: AiChatMentorProps) {
     <div className="flex flex-col space-y-6 max-h-[calc(100vh-180px)] overflow-hidden">
       <div className="flex-shrink-0 px-1">
         <div className="flex items-center space-x-2">
-          <Icons.AIChat className="h-7 w-7 text-primary" />
+          <Icons.AIMentor className="h-7 w-7 text-primary" />
           <h2 className="font-headline text-2xl text-primary">
-            AI Chat Mentor
+            AI Mentor Chat
           </h2>
         </div>
         <p className="text-sm text-muted-foreground mt-1">

@@ -57,7 +57,6 @@ export interface Recommendation {
   reason: string;
 }
 
-// New AI Chat Mentor schemas and types
 export const AIChatMessageSchema = z.object({
   role: z.enum(['user', 'model']).describe("The role of the message sender, either 'user' or 'model' (AI)."),
   content: z.string().describe("The content of the chat message."),
@@ -77,7 +76,6 @@ export const AIChatOutputSchema = z.object({
 export type AIChatOutput = z.infer<typeof AIChatOutputSchema>;
 
 
-// Leaderboard related type
 export interface UserPublicProfile {
   userId: string;
   displayName: string | null;
