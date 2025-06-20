@@ -11,7 +11,7 @@ import { STRIVER_SHEET_URL } from '@/lib/constants';
 import { Icons } from '@/components/icons';
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ExternalLink, Send, User, Bot as BotIcon, ChevronDown } from 'lucide-react'; // Ensure ChevronDown is imported
+import { ExternalLink, Send, User, Bot as BotIcon } from 'lucide-react'; 
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
 
@@ -28,16 +28,7 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
 
   const lastMessageRef = React.useRef<HTMLDivElement>(null);
   const chatContainerRef = React.useRef<HTMLDivElement>(null);
-  const [showScrollButton, setShowScrollButton] = React.useState(false);
   const [isAtBottom, setIsAtBottom] = React.useState(true);
-
-  const scrollToBottom = React.useCallback(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-    setIsAtBottom(true);
-    setShowScrollButton(false);
-  }, []); // Dependencies are stable setters or refs
 
   const handleSendMessage = async () => {
     if (!chatInput.trim()) return;
@@ -88,15 +79,12 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
     const atBottom = scrollHeight - scrollTop - clientHeight < 50; 
-    
     setIsAtBottom(atBottom);
-    setShowScrollButton(!atBottom && chatHistory.length > 0);
   };
 
   React.useEffect(() => {
     if (chatHistory.length === 0) {
       setIsAtBottom(true);
-      setShowScrollButton(false);
     }
   }, [chatHistory.length]);
 
@@ -228,19 +216,6 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
                   Ask the AI Mentor anything about DSA!
                 </div>
               )}
-               {showScrollButton && (
-                <div className="sticky bottom-0 flex justify-center pb-2 z-10">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={scrollToBottom}
-                    className="shadow-lg rounded-full px-4 py-2 h-auto"
-                  >
-                    <ChevronDown className="h-4 w-4 mr-1" />
-                    New messages
-                  </Button>
-                </div>
-              )}
             </div>
           </div>
           <div className="flex items-center space-x-2 pt-1 md:pt-2 flex-shrink-0">
@@ -254,7 +229,7 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
                   handleSendMessage();
                 }
               }}
-              rows={3} // Increased rows
+              rows={3} 
               className="flex-1 resize-none text-sm min-h-[40px] md:min-h-[48px]"
               disabled={isChatting}
             />
@@ -278,3 +253,4 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
     </div>
   );
 }
+
