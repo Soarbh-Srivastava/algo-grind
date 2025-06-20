@@ -10,7 +10,7 @@ import { GoalSetter } from '@/components/goal-setter';
 import { ProgressTracker } from '@/components/progress-tracker';
 import { ProgressVisualization } from '@/components/progress-visualization';
 import { ProblemRecommendations } from '@/components/problem-recommendations';
-import { AiChatMentor } from '@/components/ai-chat-mentor'; // Import the new chat component
+// AiChatMentor import removed
 import { Leaderboard } from '@/components/leaderboard';
 import { useAppData } from '@/hooks/use-app-data';
 import { Icons } from '@/components/icons';
@@ -47,7 +47,7 @@ export default function HomePage() {
     { value: "dashboard", label: "Dashboard", icon: Icons.Dashboard },
     { value: "log", label: "Problem Log", icon: Icons.Archive },
     { value: "analytics", label: "Analytics", icon: Icons.Analytics },
-    { value: "mentor", label: "AI Mentor", icon: Icons.AIMentor },
+    // "AI Mentor" tab removed
     { value: "leaderboard", label: "Leaderboard", icon: Icons.Trophy },
   ];
 
@@ -105,7 +105,7 @@ export default function HomePage() {
             </Sheet>
           </div>
 
-          <TabsList className="hidden md:grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-6 md:sticky md:top-[calc(theme(spacing.16)+1px)] bg-background/90 backdrop-blur-sm z-30 py-2 shadow-sm">
+          <TabsList className="hidden md:grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mb-6 md:sticky md:top-[calc(theme(spacing.16)+1px)] bg-background/90 backdrop-blur-sm z-30 py-2 shadow-sm"> {/* Adjusted grid-cols */}
             {tabsConfig.map((tab) => (
               <TabsTrigger
                 key={tab.value}
@@ -145,11 +145,7 @@ export default function HomePage() {
             />
           </TabsContent>
 
-          <TabsContent value="mentor">
-            <AiChatMentor
-              defaultCodingLanguage={appData.goalSettings.defaultCodingLanguage}
-            />
-          </TabsContent>
+          {/* TabsContent for "mentor" removed */}
 
           <TabsContent value="leaderboard">
             <Leaderboard />
