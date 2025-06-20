@@ -256,7 +256,7 @@ export function AiMentor({ defaultCodingLanguage }: AiMentorProps) {
                   handleSendMessage();
                 }
               }}
-              rows={1}
+              rows={3}
               className="flex-1 resize-none text-sm min-h-[40px] md:min-h-[48px]"
               disabled={isChatting}
             />
