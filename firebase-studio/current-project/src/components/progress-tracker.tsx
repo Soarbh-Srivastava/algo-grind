@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 
 interface ProgressTrackerProps {
@@ -109,7 +110,7 @@ export function ProgressTracker({ solvedProblems, onUpdateProblem, onRemoveProbl
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[30px] p-2"></TableHead>
+                  <TableHead className="w-[60px] p-2 text-center">Review</TableHead>
                   <TableHead className="w-[50px] p-2">Type</TableHead>
                   <TableHead className="p-2">Title</TableHead>
                   <TableHead className="p-2">Difficulty</TableHead>
@@ -120,9 +121,22 @@ export function ProgressTracker({ solvedProblems, onUpdateProblem, onRemoveProbl
               </TableHeader>
               <TableBody>
                 {sortedProblems.map((problem) => (
-                  <TableRow key={problem.id} className={problem.isForReview ? 'bg-accent/10' : ''}>
+                  <TableRow key={problem.id} data-state={problem.isForReview ? 'selected' : 'unselected'}>
                     <TableCell className="p-2 text-center">
-                      {problem.isForReview && <Icons.Star className="h-4 w-4 text-accent fill-current" />}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleToggleReview(problem)}
+                        aria-label={problem.isForReview ? 'Unmark for review' : 'Mark for review'}
+                      >
+                        <Icons.Star
+                          className={cn(
+                            'h-4 w-4',
+                            problem.isForReview ? 'text-accent fill-current' : 'text-muted-foreground'
+                          )}
+                        />
+                      </Button>
                     </TableCell>
                     <TableCell className="p-2">
                       {getIconForProblemType(problem.type, { className: "h-5 w-5 text-muted-foreground" })}
@@ -160,7 +174,7 @@ export function ProgressTracker({ solvedProblems, onUpdateProblem, onRemoveProbl
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleToggleReview(problem)}>
-                            <Icons.Star className="mr-2 h-4 w-4" /> 
+                            <Icons.Star className={cn("mr-2 h-4 w-4", problem.isForReview && "text-accent fill-current")} /> 
                             {problem.isForReview ? 'Unmark review' : 'Mark for review'}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleEdit(problem)}>
