@@ -9,7 +9,7 @@ import { ProblemForm } from '@/components/problem-form';
 import { GoalSetter } from '@/components/goal-setter';
 import { ProgressTracker } from '@/components/progress-tracker';
 import { ProgressVisualization } from '@/components/progress-visualization';
-import { ProblemRecommendations } from '@/components/problem-recommendations';
+// import { ProblemRecommendations } from '@/components/problem-recommendations';
 import { CodingBuddy } from '@/components/coding-buddy';
 import { Leaderboard } from '@/components/leaderboard';
 import { useAppData } from '@/hooks/use-app-data';

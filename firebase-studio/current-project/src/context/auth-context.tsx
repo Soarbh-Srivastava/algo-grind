@@ -135,7 +135,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // onAuthStateChanged will handle setting currentUser and calling updateUserPublicProfile
       return userCredential.user;
     } catch (error: any) {
-      console.error("Error signing in with email from AuthContext:", error);
       setLoading(false); // Reset loading state on error
       throw error; // Re-throw for the form to handle
     }
