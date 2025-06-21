@@ -29,7 +29,7 @@ export async function registerUser(
     await createUserWithEmailAndPassword(auth, email, password);
     // Successful registration is handled client-side by onAuthStateChanged,
     // which then redirects.
-    return { message: "Registration successful! Redirecting...", type: "success" };
+    return { message: "Registration successful! Try Login...", type: "success" };
   } catch (e: any) {
     console.error("Registration error from server action:", e);
     let errorMessage = "An unknown error occurred during registration.";
