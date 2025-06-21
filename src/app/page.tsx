@@ -9,18 +9,22 @@ import { ProblemForm } from '@/components/problem-form';
 import { GoalSetter } from '@/components/goal-setter';
 import { ProgressTracker } from '@/components/progress-tracker';
 import { ProgressVisualization } from '@/components/progress-visualization';
-// import { ProblemRecommendations } from '@/components/problem-recommendations';
-import { CodingBuddy } from '@/components/coding-buddy'; // Import CodingBuddy
+import { ProblemRecommendations } from '@/components/problem-recommendations';
+import { CodingBuddy } from '@/components/coding-buddy';
 import { Leaderboard } from '@/components/leaderboard';
 import { useAppData } from '@/hooks/use-app-data';
 import { Icons } from '@/components/icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { isSameDay, parseISO } from 'date-fns';
+import { GOAL_CATEGORIES } from '@/lib/constants';
 
 export default function HomePage() {
   const { currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const {
     appData,
     isInitialized: dataInitialized,
@@ -43,11 +47,67 @@ export default function HomePage() {
 
   const isLoading = authLoading || dataLoading || !dataInitialized;
 
+  React.useEffect(() => {
+    if (isLoading || !dataInitialized || !appData) {
+      return;
+    }
+
+    const checkAndShowReminder = () => {
+      // 1. Only run for users with daily goals
+      if (appData.goalSettings.period !== 'daily') {
+        return;
+      }
+
+      // 2. Check if a reminder was already shown today to prevent spam
+      const lastShownStr = localStorage.getItem('algoGrindReminderLastShown');
+      const now = new Date();
+      if (lastShownStr) {
+        const lastShownDate = new Date(JSON.parse(lastShownStr));
+        if (isSameDay(now, lastShownDate)) {
+          return;
+        }
+      }
+
+      // 3. Only show reminders in the evening (e.g., after 6 PM)
+      if (now.getHours() < 18) {
+        return;
+      }
+
+      // 4. Calculate today's progress and find unmet goals
+      const solvedToday = appData.solvedProblems.filter(p => isSameDay(parseISO(p.dateSolved), now));
+      const unmetGoalsLabels = appData.goalSettings.goals
+        .map(goal => {
+          const categoryInfo = GOAL_CATEGORIES.find(c => c.id === goal.categoryId);
+          if (!categoryInfo || goal.target <= 0) return null;
+
+          const solvedInCategory = solvedToday.filter(p => categoryInfo.problemTypes.includes(p.type)).length;
+          return solvedInCategory < goal.target ? categoryInfo.label : null;
+        })
+        .filter(label => label !== null) as string[];
+
+      // 5. If there are unmet goals, show the toast notification
+      if (unmetGoalsLabels.length > 0) {
+        const unmetGoalsString = unmetGoalsLabels.slice(0, 2).join(', ') + (unmetGoalsLabels.length > 2 ? ' and more' : '');
+        toast({
+          title: "Daily Goal Reminder",
+          description: `Keep up the grind! You still have goals for: ${unmetGoalsString}.`,
+          duration: 8000,
+        });
+
+        // 6. Record that the reminder was shown today
+        localStorage.setItem('algoGrindReminderLastShown', JSON.stringify(now));
+      }
+    };
+
+    checkAndShowReminder();
+    
+  }, [appData, dataInitialized, isLoading, toast]);
+
   const tabsConfig = [
     { value: "dashboard", label: "Dashboard", icon: Icons.Dashboard },
     { value: "log", label: "Problem Log", icon: Icons.Archive },
     { value: "analytics", label: "Analytics", icon: Icons.Analytics },
-    { value: "codingbuddy", label: "Coding Buddy", icon: Icons.CodingBuddy }, // Added Coding Buddy Tab
+    { value: "codingbuddy", label: "Coding Buddy", icon: Icons.CodingBuddy },
     { value: "leaderboard", label: "Leaderboard", icon: Icons.Trophy },
   ];
 
@@ -93,7 +153,10 @@ export default function HomePage() {
                       <Button
                         variant={activeTab === tab.value ? "secondary" : "ghost"}
                         className="w-full justify-start text-left font-headline text-base h-12"
-                        onClick={() => setActiveTab(tab.value)}
+                        onClick={() => {
+                          setActiveTab(tab.value);
+                          setMobileSheetOpen(false);
+                        }}
                       >
                         <tab.icon className="mr-3 h-5 w-5" />
                         {tab.label}
@@ -121,6 +184,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-8">
                 <ProblemForm onAddProblem={addSolvedProblem} />
+                <ProblemRecommendations solvedProblems={appData.solvedProblems} />
               </div>
               <div className="lg:col-span-1 space-y-8">
                 <GoalSetter currentSettings={appData.goalSettings} onUpdateSettings={updateGoalSettings} />
@@ -144,7 +208,7 @@ export default function HomePage() {
             />
           </TabsContent>
 
-          <TabsContent value="codingbuddy"> {/* Content for Coding Buddy */}
+          <TabsContent value="codingbuddy">
             <CodingBuddy />
           </TabsContent>
 
