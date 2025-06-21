@@ -37,6 +37,7 @@ import {
   Moon,
   Trophy,
   Menu,
+  Star,
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import type { ProblemType } from '@/types';
@@ -76,10 +77,11 @@ export const Icons = {
   Moon: (props: LucideProps) => <Moon {...props} />,
   Trophy: (props: LucideProps) => <Trophy {...props} />,
   Menu: (props: LucideProps) => <Menu {...props} />,
+  Star: (props: LucideProps) => <Star {...props} />,
   Logo: (props: LucideProps) => ( 
     <svg 
       xmlns="http://www.w3.org/2000/svg" 
-      viewBox="0 0 24 24" 
+      viewBox="0 0 24" 
       fill="none" 
       stroke="currentColor" 
       strokeWidth="2" 
