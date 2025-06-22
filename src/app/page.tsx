@@ -9,7 +9,7 @@ import { ProblemForm } from '@/components/problem-form';
 import { GoalSetter } from '@/components/goal-setter';
 import { ProgressTracker } from '@/components/progress-tracker';
 import { ProgressVisualization } from '@/components/progress-visualization';
-// import { ProblemRecommendations } from '@/components/problem-recommendations';
+import { ProblemRecommendations } from '@/components/problem-recommendations';
 import { CodingBuddy } from '@/components/coding-buddy';
 import { Leaderboard } from '@/components/leaderboard';
 import { useAppData } from '@/hooks/use-app-data';
@@ -67,9 +67,11 @@ export default function HomePage() {
           return;
         }
       }
+      
+      const reminderTime = appData.goalSettings.reminderTime || 18; // Default to 6 PM
 
-      // 3. Only show reminders in the evening (e.g., after 6 PM)
-      if (now.getHours() < 18) {
+      // 3. Only show reminders after the user-defined time
+      if (now.getHours() < reminderTime) {
         return;
       }
 

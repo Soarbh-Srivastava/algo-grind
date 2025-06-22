@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import type { GoalSettings, Goal } from '@/types';
-import { GOAL_CATEGORIES, CODING_LANGUAGES } from '@/lib/constants'; // Added CODING_LANGUAGES
+import { GOAL_CATEGORIES, CODING_LANGUAGES, REMINDER_TIMES } from '@/lib/constants';
 import { Icons } from './icons';
 import { Separator } from './ui/separator';
 
@@ -26,7 +26,8 @@ const goalSchema = z.object({
 const goalSettingsSchema = z.object({
   period: z.enum(['daily', 'weekly']),
   goals: z.array(goalSchema),
-  defaultCodingLanguage: z.string().optional(), // Added
+  defaultCodingLanguage: z.string().optional(),
+  reminderTime: z.coerce.number().optional(),
 });
 
 type GoalSettingsFormValues = z.infer<typeof goalSettingsSchema>;
@@ -50,7 +51,8 @@ export function GoalSetter({ currentSettings, onUpdateSettings }: GoalSetterProp
           target: existingGoal ? existingGoal.target : category.defaultTarget,
         };
       }),
-      defaultCodingLanguage: currentSettings.defaultCodingLanguage || 'javascript', // Default value
+      defaultCodingLanguage: currentSettings.defaultCodingLanguage || 'javascript',
+      reminderTime: currentSettings.reminderTime || 18, // Default to 6 PM
     },
   });
 
@@ -64,7 +66,8 @@ export function GoalSetter({ currentSettings, onUpdateSettings }: GoalSetterProp
           target: existingGoal ? existingGoal.target : category.defaultTarget,
         };
       }),
-      defaultCodingLanguage: currentSettings.defaultCodingLanguage || 'javascript', // Reset value
+      defaultCodingLanguage: currentSettings.defaultCodingLanguage || 'javascript',
+      reminderTime: currentSettings.reminderTime || 18,
     });
   }, [currentSettings, form]);
 
@@ -76,6 +79,8 @@ export function GoalSetter({ currentSettings, onUpdateSettings }: GoalSetterProp
     });
   }
 
+  const isDaily = form.watch('period') === 'daily';
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
@@ -83,58 +88,87 @@ export function GoalSetter({ currentSettings, onUpdateSettings }: GoalSetterProp
           <Icons.Goal className="mr-2 h-7 w-7" /> Set Your Grind Goals
         </CardTitle>
         <CardDescription>
-          Define your consistency targets and default coding language for the AI Mentor.
+          Define your targets, language, and reminder preferences.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="period"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Goal Period</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select period" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="defaultCodingLanguage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Default Coding Language</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select language" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {CODING_LANGUAGES.map(lang => (
-                          <SelectItem key={lang.value} value={lang.value}>
-                            {lang.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="space-y-6">
+               <h3 className="text-lg font-medium font-headline text-foreground">General Settings</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="period"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Goal Period</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select period" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="daily">Daily</SelectItem>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="defaultCodingLanguage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Default Coding Language</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select language" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {CODING_LANGUAGES.map(lang => (
+                              <SelectItem key={lang.value} value={lang.value}>
+                                {lang.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {isDaily && (
+                     <FormField
+                        control={form.control}
+                        name="reminderTime"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Daily Reminder Time</FormLabel>
+                            <Select onValueChange={(value) => field.onChange(parseInt(value, 10))} defaultValue={String(field.value)}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select reminder time" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {REMINDER_TIMES.map(time => (
+                                  <SelectItem key={time.value} value={String(time.value)}>
+                                    {time.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                  )}
+                </div>
             </div>
             
             <Separator />

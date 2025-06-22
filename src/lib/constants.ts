@@ -71,3 +71,12 @@ export const CODING_LANGUAGES: { value: string; label: string }[] = [
   { value: 'kotlin', label: 'Kotlin' },
   { value: 'swift', label: 'Swift' },
 ];
+
+export const REMINDER_TIMES: { value: number; label: string }[] = [
+  { value: 17, label: '5:00 PM' },
+  { value: 18, label: '6:00 PM' },
+  { value: 19, label: '7:00 PM' },
+  { value: 20, label: '8:00 PM' },
+  { value: 21, label: '9:00 PM' },
+  { value: 22, label: '10:00 PM' },
+];

@@ -18,6 +18,7 @@ const getDefaultGoalSettings = (): GoalSettings => ({
     target: category.defaultTarget,
   })),
   defaultCodingLanguage: 'javascript',
+  reminderTime: 18, // Default to 6 PM (18:00)
 });
 
 const getDefaultAppData = (): AppData => ({
@@ -139,6 +140,10 @@ export function useAppData() {
           }
           if (typeof parsedData.goalSettings.defaultCodingLanguage === 'undefined') {
             parsedData.goalSettings.defaultCodingLanguage = getDefaultGoalSettings().defaultCodingLanguage;
+            shouldUpdateFirestore = true;
+          }
+          if (typeof parsedData.goalSettings.reminderTime === 'undefined') {
+            parsedData.goalSettings.reminderTime = getDefaultGoalSettings().reminderTime;
             shouldUpdateFirestore = true;
           }
           if (typeof parsedData.solvedProblems === 'undefined' || !Array.isArray(parsedData.solvedProblems)) {
@@ -283,6 +288,7 @@ export function useAppData() {
       const settingsToSave: GoalSettings = {
         ...settings,
         defaultCodingLanguage: settings.defaultCodingLanguage || getDefaultGoalSettings().defaultCodingLanguage,
+        reminderTime: settings.reminderTime || getDefaultGoalSettings().reminderTime,
       };
       await updateDoc(dataDocRef, {
         goalSettings: settingsToSave
