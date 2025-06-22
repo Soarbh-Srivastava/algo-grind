@@ -13,8 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import type { GoalSettings, Goal } from '@/types';
-import { GOAL_CATEGORIES, CODING_LANGUAGES, REMINDER_TIMES } from '@/lib/constants';
+import type { GoalSettings } from '@/types';
+import { GOAL_CATEGORIES, CODING_LANGUAGES } from '@/lib/constants';
 import { Icons } from './icons';
 import { Separator } from './ui/separator';
 
@@ -27,7 +27,9 @@ const goalSettingsSchema = z.object({
   period: z.enum(['daily', 'weekly']),
   goals: z.array(goalSchema),
   defaultCodingLanguage: z.string().optional(),
-  reminderTime: z.coerce.number().optional(),
+  reminderTime: z.string().regex(/^([0-1]\d|2[0-3]):([0-5]\d)$/, {
+    message: "Invalid time format. Please use HH:MM.",
+  }).optional(),
 });
 
 type GoalSettingsFormValues = z.infer<typeof goalSettingsSchema>;
@@ -52,7 +54,7 @@ export function GoalSetter({ currentSettings, onUpdateSettings }: GoalSetterProp
         };
       }),
       defaultCodingLanguage: currentSettings.defaultCodingLanguage || 'javascript',
-      reminderTime: currentSettings.reminderTime || 18, // Default to 6 PM
+      reminderTime: currentSettings.reminderTime || '18:00', // Default to 6 PM
     },
   });
 
@@ -67,7 +69,7 @@ export function GoalSetter({ currentSettings, onUpdateSettings }: GoalSetterProp
         };
       }),
       defaultCodingLanguage: currentSettings.defaultCodingLanguage || 'javascript',
-      reminderTime: currentSettings.reminderTime || 18,
+      reminderTime: currentSettings.reminderTime || '18:00',
     });
   }, [currentSettings, form]);
 
@@ -149,20 +151,9 @@ export function GoalSetter({ currentSettings, onUpdateSettings }: GoalSetterProp
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Daily Reminder Time</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(parseInt(value, 10))} defaultValue={String(field.value)}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select reminder time" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {REMINDER_TIMES.map(time => (
-                                  <SelectItem key={time.value} value={String(time.value)}>
-                                    {time.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                             <FormControl>
+                               <Input type="time" {...field} />
+                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}

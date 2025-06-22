@@ -35,7 +35,7 @@ export interface GoalSettings {
   goals: Goal[];
   period: 'daily' | 'weekly';
   defaultCodingLanguage?: string;
-  reminderTime?: number; // e.g., 18 for 6 PM
+  reminderTime?: string; // Format "HH:mm"
 }
 
 export interface GoalCategory {

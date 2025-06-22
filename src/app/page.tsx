@@ -68,10 +68,11 @@ export default function HomePage() {
         }
       }
       
-      const reminderTime = appData.goalSettings.reminderTime || 18; // Default to 6 PM
+      const reminderTimeStr = appData.goalSettings.reminderTime || '18:00'; // Default to 6 PM
+      const [reminderHours, reminderMinutes] = reminderTimeStr.split(':').map(Number);
 
       // 3. Only show reminders after the user-defined time
-      if (now.getHours() < reminderTime) {
+      if (now.getHours() < reminderHours || (now.getHours() === reminderHours && now.getMinutes() < reminderMinutes)) {
         return;
       }
 

@@ -18,7 +18,7 @@ const getDefaultGoalSettings = (): GoalSettings => ({
     target: category.defaultTarget,
   })),
   defaultCodingLanguage: 'javascript',
-  reminderTime: 18, // Default to 6 PM (18:00)
+  reminderTime: '18:00', // Default to 6 PM as HH:mm string
 });
 
 const getDefaultAppData = (): AppData => ({
@@ -142,10 +142,17 @@ export function useAppData() {
             parsedData.goalSettings.defaultCodingLanguage = getDefaultGoalSettings().defaultCodingLanguage;
             shouldUpdateFirestore = true;
           }
+          // Handle reminderTime: check for undefined or old number format
           if (typeof parsedData.goalSettings.reminderTime === 'undefined') {
             parsedData.goalSettings.reminderTime = getDefaultGoalSettings().reminderTime;
             shouldUpdateFirestore = true;
+          } else if (typeof (parsedData.goalSettings as any).reminderTime === 'number') {
+            // Backwards compatibility for old number format
+            const hour = (parsedData.goalSettings as any).reminderTime as number;
+            parsedData.goalSettings.reminderTime = `${String(hour).padStart(2, '0')}:00`;
+            shouldUpdateFirestore = true;
           }
+
           if (typeof parsedData.solvedProblems === 'undefined' || !Array.isArray(parsedData.solvedProblems)) {
             parsedData.solvedProblems = []; 
             shouldUpdateFirestore = true;
