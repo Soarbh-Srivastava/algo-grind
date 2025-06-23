@@ -36,6 +36,7 @@ export interface GoalSettings {
   period: 'daily' | 'weekly';
   defaultCodingLanguage?: string;
   reminderTime?: string; // Format "HH:mm"
+  webhookUrl?: string;
 }
 
 export interface GoalCategory {

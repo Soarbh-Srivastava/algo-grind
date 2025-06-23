@@ -19,6 +19,7 @@ const getDefaultGoalSettings = (): GoalSettings => ({
   })),
   defaultCodingLanguage: 'javascript',
   reminderTime: '18:00', // Default to 6 PM as HH:mm string
+  webhookUrl: '',
 });
 
 const getDefaultAppData = (): AppData => ({
@@ -150,6 +151,10 @@ export function useAppData() {
             // Backwards compatibility for old number format
             const hour = (parsedData.goalSettings as any).reminderTime as number;
             parsedData.goalSettings.reminderTime = `${String(hour).padStart(2, '0')}:00`;
+            shouldUpdateFirestore = true;
+          }
+           if (typeof parsedData.goalSettings.webhookUrl === 'undefined') {
+            parsedData.goalSettings.webhookUrl = getDefaultGoalSettings().webhookUrl;
             shouldUpdateFirestore = true;
           }
 
@@ -296,6 +301,7 @@ export function useAppData() {
         ...settings,
         defaultCodingLanguage: settings.defaultCodingLanguage || getDefaultGoalSettings().defaultCodingLanguage,
         reminderTime: settings.reminderTime || getDefaultGoalSettings().reminderTime,
+        webhookUrl: settings.webhookUrl || '',
       };
       await updateDoc(dataDocRef, {
         goalSettings: settingsToSave

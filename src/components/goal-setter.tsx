@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import type { GoalSettings } from '@/types';
 import { GOAL_CATEGORIES, CODING_LANGUAGES } from '@/lib/constants';
@@ -30,6 +30,7 @@ const goalSettingsSchema = z.object({
   reminderTime: z.string().regex(/^([0-1]\d|2[0-3]):([0-5]\d)$/, {
     message: "Invalid time format. Please use HH:MM.",
   }).optional(),
+  webhookUrl: z.string().url("Please enter a valid URL.").or(z.literal('')).optional(),
 });
 
 type GoalSettingsFormValues = z.infer<typeof goalSettingsSchema>;
@@ -54,7 +55,8 @@ export function GoalSetter({ currentSettings, onUpdateSettings }: GoalSetterProp
         };
       }),
       defaultCodingLanguage: currentSettings.defaultCodingLanguage || 'javascript',
-      reminderTime: currentSettings.reminderTime || '18:00', // Default to 6 PM
+      reminderTime: currentSettings.reminderTime || '18:00',
+      webhookUrl: currentSettings.webhookUrl || '',
     },
   });
 
@@ -70,6 +72,7 @@ export function GoalSetter({ currentSettings, onUpdateSettings }: GoalSetterProp
       }),
       defaultCodingLanguage: currentSettings.defaultCodingLanguage || 'javascript',
       reminderTime: currentSettings.reminderTime || '18:00',
+      webhookUrl: currentSettings.webhookUrl || '',
     });
   }, [currentSettings, form]);
 
@@ -90,7 +93,7 @@ export function GoalSetter({ currentSettings, onUpdateSettings }: GoalSetterProp
           <Icons.Goal className="mr-2 h-7 w-7" /> Set Your Grind Goals
         </CardTitle>
         <CardDescription>
-          Define your targets, language, and reminder preferences.
+          Define your targets, language, and notification preferences.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -160,6 +163,24 @@ export function GoalSetter({ currentSettings, onUpdateSettings }: GoalSetterProp
                       />
                   )}
                 </div>
+                 {isDaily && (
+                  <FormField
+                    control={form.control}
+                    name="webhookUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Make.com Webhook URL (Optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://hook.make.com/..." {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormDescription>
+                          Get a notification in Slack, Discord, etc. when you open the app after your reminder time.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
             </div>
             
             <Separator />
