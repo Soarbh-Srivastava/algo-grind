@@ -95,27 +95,41 @@ export default function HomePage() {
         .filter(g => g !== null);
 
       if (unmetGoalDetails.length > 0) {
+        // Set flag immediately to prevent re-sends on refresh, even if an API fails
+        localStorage.setItem('userApiDataSent', JSON.stringify(now));
+
         try {
-          const response = await fetch('/api/user-data', {
+          const payload = {
+            email: currentUser.email,
+            unmetGoals: unmetGoalDetails,
+          };
+          const fetchOptions = {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              email: currentUser.email,
-              unmetGoals: unmetGoalDetails,
-            }),
-          });
+            body: JSON.stringify(payload),
+          };
 
-          if (response.ok) {
-            console.log('Successfully sent unmet goal data to API.');
-            localStorage.setItem('userApiDataSent', JSON.stringify(now));
+          // --- Send to first endpoint ---
+          const userDataResponse = await fetch('/api/user-data', fetchOptions);
+          if (userDataResponse.ok) {
+            console.log('Successfully sent unmet goal data to /api/user-data.');
           } else {
-            const errorData = await response.json();
-            console.error('Failed to send unmet goal data to API:', errorData.message);
+            const errorData = await userDataResponse.json();
+            console.error('Failed to send data to /api/user-data:', errorData.message);
+          }
+
+          // --- Send to second endpoint ---
+          const triggerFetchResponse = await fetch('/api/trigger-fetch', fetchOptions);
+          if (triggerFetchResponse.ok) {
+            console.log('Successfully sent unmet goal data to /api/trigger-fetch.');
+          } else {
+            const errorData = await triggerFetchResponse.json();
+            console.error('Failed to send data to /api/trigger-fetch:', errorData.message);
           }
         } catch (error) {
-          console.error('Error calling /api/user-data:', error);
+          console.error('Error calling API endpoints:', error);
         }
       }
     };
