@@ -20,7 +20,6 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { isSameDay, parseISO } from 'date-fns';
 import { GOAL_CATEGORIES } from '@/lib/constants';
-import { triggerWebhook, type WebhookPayload } from './actions';
 
 export default function HomePage() {
   const { currentUser, loading: authLoading } = useAuth();
@@ -53,22 +52,19 @@ export default function HomePage() {
       return;
     }
 
-    const checkGoalsAndNotify = async () => {
-      // 1. Only run for users with daily goals
+    const checkGoalsAndNotify = () => {
       if (appData.goalSettings.period !== 'daily') {
         return;
       }
 
       const now = new Date();
-      const reminderTimeStr = appData.goalSettings.reminderTime || '18:00'; // Default to 6 PM
+      const reminderTimeStr = appData.goalSettings.reminderTime || '18:00';
       const [reminderHours, reminderMinutes] = reminderTimeStr.split(':').map(Number);
       
-      // 2. Only run check after the user-defined time
       if (now.getHours() < reminderHours || (now.getHours() === reminderHours && now.getMinutes() < reminderMinutes)) {
         return;
       }
 
-      // 3. Calculate today's progress and find unmet goals
       const solvedToday = appData.solvedProblems.filter(p => isSameDay(parseISO(p.dateSolved), now));
       const allGoals = appData.goalSettings.goals.filter(g => g.target > 0);
       const unmetGoals = allGoals
@@ -82,9 +78,7 @@ export default function HomePage() {
         .filter(g => g !== null);
 
       const unmetGoalLabels = unmetGoals.map(g => g!.label);
-      const goalsMet = unmetGoalLabels.length === 0 && allGoals.length > 0;
-
-      // 4. Trigger Toast Notification (if not already shown today)
+      
       const lastToastShownStr = localStorage.getItem('algoGrindReminderLastShown');
       if (!lastToastShownStr || !isSameDay(new Date(JSON.parse(lastToastShownStr)), now)) {
         if (unmetGoalLabels.length > 0) {
@@ -96,34 +90,6 @@ export default function HomePage() {
             });
             localStorage.setItem('algoGrindReminderLastShown', JSON.stringify(now));
         }
-      }
-      
-      // 5. Trigger Webhook (if not already triggered today)
-      const webhookUrl = appData.goalSettings.webhookUrl;
-      const lastWebhookTriggeredStr = localStorage.getItem('algoGrindWebhookLastTriggered');
-      if (webhookUrl && (!lastWebhookTriggeredStr || !isSameDay(new Date(JSON.parse(lastWebhookTriggeredStr)), now))) {
-          const payload: WebhookPayload = {
-              userId: currentUser.uid,
-              displayName: currentUser.displayName,
-              goalsMet: goalsMet,
-              unmetGoalLabels: unmetGoalLabels,
-              totalGoals: allGoals.length,
-              completedGoals: allGoals.length - unmetGoalLabels.length,
-          };
-          
-          triggerWebhook(webhookUrl, payload).then(result => {
-              if (result.success) {
-                  console.log('Webhook successfully triggered.');
-              } else {
-                  console.error('Failed to trigger webhook:', result.error);
-                  toast({
-                      variant: 'destructive',
-                      title: "Webhook Failed",
-                      description: "Could not send notification via your webhook. Please check the URL in your settings.",
-                  });
-              }
-          });
-          localStorage.setItem('algoGrindWebhookLastTriggered', JSON.stringify(now));
       }
     };
 
