@@ -47,38 +47,46 @@ export default function HomePage() {
 
   // This effect will handle the API call for unmet goals.
   React.useEffect(() => {
-    if (isLoading || !isInitialized || !appData || !currentUser || !currentUser.email) {
-      return;
-    }
+    const sendReminderIfNeeded = async () => {
+      // Guard Clause: Wait for all data to be loaded and ready.
+      if (isLoading || !isInitialized || !appData || !currentUser?.email) {
+        return;
+      }
+      console.log('AlgoGrind Reminder: Running check...');
 
-    const checkGoalsAndSendData = async () => {
-      console.log('AlgoGrind Reminder: Running checkGoalsAndSendData...');
-      
+      // 1. Check if goals are daily. If not, no daily reminder needed.
       if (appData.goalSettings.period !== 'daily') {
         console.log('AlgoGrind Reminder: Exiting. Goal period is not "daily".');
         return;
       }
 
+      // 2. Check if a reminder has already been sent today.
       const now = new Date();
+      try {
+        const lastApiCallSentStr = localStorage.getItem('userApiDataSent');
+        if (lastApiCallSentStr && isSameDay(new Date(JSON.parse(lastApiCallSentStr)), now)) {
+          console.log('AlgoGrind Reminder: Exiting. Reminder has already been sent today.');
+          return; 
+        }
+      } catch (e) {
+        console.error("AlgoGrind Reminder: Clearing corrupted reminder flag from localStorage.", e);
+        localStorage.removeItem('userApiDataSent');
+      }
+
+      // 3. Check if it's past the user's chosen reminder time.
       const reminderTimeStr = appData.goalSettings.reminderTime || '18:00';
       const [reminderHours, reminderMinutes] = reminderTimeStr.split(':').map(Number);
+      const isBeforeReminderTime = now.getHours() < reminderHours || (now.getHours() === reminderHours && now.getMinutes() < reminderMinutes);
       
-      console.log(`AlgoGrind Reminder: Current time is ${now.toLocaleTimeString()}. Reminder time is ${reminderTimeStr}.`);
-
-      if (now.getHours() < reminderHours || (now.getHours() === reminderHours && now.getMinutes() < reminderMinutes)) {
+      console.log(`AlgoGrind Reminder: Current time: ${now.toLocaleTimeString()}, Reminder time: ${reminderTimeStr}`);
+      if (isBeforeReminderTime) {
         console.log('AlgoGrind Reminder: Exiting. It is not yet reminder time.');
-        return;
+        return; 
       }
 
-      const lastApiCallSentStr = localStorage.getItem('userApiDataSent');
-      if (lastApiCallSentStr && isSameDay(new Date(JSON.parse(lastApiCallSentStr)), now)) {
-        console.log('AlgoGrind Reminder: Exiting. Reminder API call has already been sent today.');
-        return;
-      }
-
+      // 4. Calculate if there are any unmet goals.
       const solvedToday = appData.solvedProblems.filter(p => isSameDay(parseISO(p.dateSolved), now));
       const allGoals = appData.goalSettings.goals.filter(g => g.target > 0);
-      
       console.log(`AlgoGrind Reminder: Found ${solvedToday.length} problems solved today.`);
       
       const unmetGoalDetails = allGoals
@@ -90,24 +98,25 @@ export default function HomePage() {
           const remaining = goal.target - solvedInCategory;
           
           if (remaining > 0) {
-              return {
-                  category: categoryInfo.label,
-                  target: goal.target,
-                  solved: solvedInCategory,
-                  remaining: remaining,
-              };
+            return {
+              category: categoryInfo.label,
+              target: goal.target,
+              solved: solvedInCategory,
+              remaining: remaining,
+            };
           }
           return null;
         })
-        .filter(g => g !== null);
-
+        .filter((g): g is NonNullable<typeof g> => g !== null);
+      
       console.log('AlgoGrind Reminder: Calculated unmet goals:', unmetGoalDetails);
 
+      // 5. If there are unmet goals, send the data to the API endpoints.
       if (unmetGoalDetails.length > 0) {
-        console.log('AlgoGrind Reminder: Unmet goals found. Preparing to send data to API endpoints.');
-        
+        console.log('AlgoGrind Reminder: Unmet goals found. Preparing to send data...');
+        // Set the flag now to prevent multiple requests if the user reloads.
         localStorage.setItem('userApiDataSent', JSON.stringify(now));
-
+        
         try {
           const payload = {
             email: currentUser.email,
@@ -115,38 +124,31 @@ export default function HomePage() {
           };
           const fetchOptions = {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
           };
 
-          // --- Send to first endpoint ---
-          const userDataResponse = await fetch('/api/user-data', fetchOptions);
-          if (userDataResponse.ok) {
-            console.log('AlgoGrind Reminder: Successfully sent unmet goal data to /api/user-data.');
+          // Send to both endpoints and log success/failure.
+          const res1 = await fetch('/api/user-data', fetchOptions);
+          const res2 = await fetch('/api/trigger-fetch', fetchOptions);
+
+          if (res1.ok && res2.ok) {
+            console.log('AlgoGrind Reminder: Successfully sent unmet goal data to both API endpoints.');
           } else {
-            const errorData = await userDataResponse.json();
-            console.error('AlgoGrind Reminder: Failed to send data to /api/user-data:', errorData.message);
+             console.error('AlgoGrind Reminder: Failed to send data to one or more endpoints.', { res1_status: res1.status, res2_status: res2.status });
           }
 
-          // --- Send to second endpoint ---
-          const triggerFetchResponse = await fetch('/api/trigger-fetch', fetchOptions);
-          if (triggerFetchResponse.ok) {
-            console.log('AlgoGrind Reminder: Successfully sent unmet goal data to /api/trigger-fetch.');
-          } else {
-            const errorData = await triggerFetchResponse.json();
-            console.error('AlgoGrind Reminder: Failed to send data to /api/trigger-fetch:', errorData.message);
-          }
         } catch (error) {
           console.error('AlgoGrind Reminder: Error calling API endpoints:', error);
+          // If the API call fails, remove the flag so it can be retried.
+          localStorage.removeItem('userApiDataSent');
         }
       } else {
-        console.log('AlgoGrind Reminder: No unmet goals found, or all goals are met. No API call needed.');
+          console.log('AlgoGrind Reminder: No unmet goals found. Nothing to send.');
       }
     };
 
-    checkGoalsAndSendData();
+    sendReminderIfNeeded();
     
   }, [appData, isInitialized, isLoading, currentUser]);
 
@@ -270,5 +272,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
