@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -51,8 +52,10 @@ export default function HomePage() {
     }
 
     const checkGoalsAndSendData = async () => {
-      // Only run for daily goals
+      console.log('AlgoGrind Reminder: Running checkGoalsAndSendData...');
+      
       if (appData.goalSettings.period !== 'daily') {
+        console.log('AlgoGrind Reminder: Exiting. Goal period is not "daily".');
         return;
       }
 
@@ -60,19 +63,23 @@ export default function HomePage() {
       const reminderTimeStr = appData.goalSettings.reminderTime || '18:00';
       const [reminderHours, reminderMinutes] = reminderTimeStr.split(':').map(Number);
       
-      // Don't run if it's before the user's specified reminder time
+      console.log(`AlgoGrind Reminder: Current time is ${now.toLocaleTimeString()}. Reminder time is ${reminderTimeStr}.`);
+
       if (now.getHours() < reminderHours || (now.getHours() === reminderHours && now.getMinutes() < reminderMinutes)) {
+        console.log('AlgoGrind Reminder: Exiting. It is not yet reminder time.');
         return;
       }
 
       const lastApiCallSentStr = localStorage.getItem('userApiDataSent');
-      // Don't run if data has already been sent today
       if (lastApiCallSentStr && isSameDay(new Date(JSON.parse(lastApiCallSentStr)), now)) {
+        console.log('AlgoGrind Reminder: Exiting. Reminder API call has already been sent today.');
         return;
       }
 
       const solvedToday = appData.solvedProblems.filter(p => isSameDay(parseISO(p.dateSolved), now));
       const allGoals = appData.goalSettings.goals.filter(g => g.target > 0);
+      
+      console.log(`AlgoGrind Reminder: Found ${solvedToday.length} problems solved today.`);
       
       const unmetGoalDetails = allGoals
         .map(goal => {
@@ -94,8 +101,11 @@ export default function HomePage() {
         })
         .filter(g => g !== null);
 
+      console.log('AlgoGrind Reminder: Calculated unmet goals:', unmetGoalDetails);
+
       if (unmetGoalDetails.length > 0) {
-        // Set flag immediately to prevent re-sends on refresh, even if an API fails
+        console.log('AlgoGrind Reminder: Unmet goals found. Preparing to send data to API endpoints.');
+        
         localStorage.setItem('userApiDataSent', JSON.stringify(now));
 
         try {
@@ -114,23 +124,25 @@ export default function HomePage() {
           // --- Send to first endpoint ---
           const userDataResponse = await fetch('/api/user-data', fetchOptions);
           if (userDataResponse.ok) {
-            console.log('Successfully sent unmet goal data to /api/user-data.');
+            console.log('AlgoGrind Reminder: Successfully sent unmet goal data to /api/user-data.');
           } else {
             const errorData = await userDataResponse.json();
-            console.error('Failed to send data to /api/user-data:', errorData.message);
+            console.error('AlgoGrind Reminder: Failed to send data to /api/user-data:', errorData.message);
           }
 
           // --- Send to second endpoint ---
           const triggerFetchResponse = await fetch('/api/trigger-fetch', fetchOptions);
           if (triggerFetchResponse.ok) {
-            console.log('Successfully sent unmet goal data to /api/trigger-fetch.');
+            console.log('AlgoGrind Reminder: Successfully sent unmet goal data to /api/trigger-fetch.');
           } else {
             const errorData = await triggerFetchResponse.json();
-            console.error('Failed to send data to /api/trigger-fetch:', errorData.message);
+            console.error('AlgoGrind Reminder: Failed to send data to /api/trigger-fetch:', errorData.message);
           }
         } catch (error) {
-          console.error('Error calling API endpoints:', error);
+          console.error('AlgoGrind Reminder: Error calling API endpoints:', error);
         }
+      } else {
+        console.log('AlgoGrind Reminder: No unmet goals found, or all goals are met. No API call needed.');
       }
     };
 
@@ -258,3 +270,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
