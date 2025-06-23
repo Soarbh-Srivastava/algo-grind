@@ -14,9 +14,9 @@ const WebhookPayloadSchema = z.object({
 export type WebhookPayload = z.infer<typeof WebhookPayloadSchema>;
 
 export async function triggerWebhook(webhookUrl: string, payload: WebhookPayload) {
-  if (!webhookUrl.startsWith('https://hook.make.com/')) {
-    console.error("Invalid or non-Make.com webhook URL provided.");
-    return { success: false, error: 'Invalid or non-Make.com webhook URL. Please provide a valid URL from Make.com.' };
+  if (!webhookUrl.startsWith('https://hook.make.com/') && !webhookUrl.startsWith('https://hooks.zapier.com/')) {
+    console.error("Invalid or unsupported webhook URL provided.");
+    return { success: false, error: 'Invalid webhook URL. Please provide a valid URL from Make.com or Zapier.' };
   }
 
   try {

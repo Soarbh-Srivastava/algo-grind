@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -169,12 +168,12 @@ export function GoalSetter({ currentSettings, onUpdateSettings }: GoalSetterProp
                     name="webhookUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Make.com Webhook URL (Optional)</FormLabel>
+                        <FormLabel>Automation Webhook URL (Optional)</FormLabel>
                         <FormControl>
-                          <Input placeholder="https://hook.make.com/..." {...field} value={field.value ?? ''} />
+                          <Input placeholder="e.g., Zapier or Make.com webhook" {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormDescription>
-                          Get a notification in Slack, Discord, etc. when you open the app after your reminder time.
+                          Get a notification in Slack, Discord, etc., via Zapier or Make.com.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
