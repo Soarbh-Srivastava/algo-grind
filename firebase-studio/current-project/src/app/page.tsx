@@ -17,13 +17,15 @@ import { Icons } from '@/components/icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Button } from '@/components/ui/button';
+import { isSameDay, parseISO } from 'date-fns';
+import { GOAL_CATEGORIES } from '@/lib/constants';
 
 export default function HomePage() {
   const { currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const {
     appData,
-    isInitialized: dataInitialized,
+    isInitialized,
     isLoading: dataLoading,
     addSolvedProblem,
     updateSolvedProblem,
@@ -41,7 +43,104 @@ export default function HomePage() {
     }
   }, [currentUser, authLoading, router]);
 
-  const isLoading = authLoading || dataLoading || !dataInitialized;
+  const isLoading = authLoading || dataLoading || !isInitialized;
+
+  // This effect will handle the API call for unmet goals.
+  React.useEffect(() => {
+    const sendReminderIfNeeded = async () => {
+      // Guard Clause: Wait for all data to be loaded and ready.
+      if (isLoading || !isInitialized || !appData || !currentUser?.email) {
+        return;
+      }
+
+      // 1. Check if goals are daily. If not, no daily reminder needed.
+      if (appData.goalSettings.period !== 'daily') {
+        return;
+      }
+
+      // 2. Check if a reminder has already been sent today.
+      const now = new Date();
+      try {
+        const lastApiCallSentStr = localStorage.getItem('userApiDataSent');
+        if (lastApiCallSentStr && isSameDay(new Date(JSON.parse(lastApiCallSentStr)), now)) {
+          return; // Already sent today, do nothing.
+        }
+      } catch (e) {
+        console.error("AlgoGrind Reminder: Clearing corrupted reminder flag from localStorage.", e);
+        localStorage.removeItem('userApiDataSent');
+      }
+
+      // 3. Check if it's past the user's chosen reminder time.
+      const reminderTimeStr = appData.goalSettings.reminderTime || '18:00';
+      const [reminderHours, reminderMinutes] = reminderTimeStr.split(':').map(Number);
+      const isBeforeReminderTime = now.getHours() < reminderHours || (now.getHours() === reminderHours && now.getMinutes() < reminderMinutes);
+      
+      if (isBeforeReminderTime) {
+        return; // Not time yet, do nothing.
+      }
+
+      // 4. Calculate if there are any unmet goals.
+      const solvedToday = appData.solvedProblems.filter(p => isSameDay(parseISO(p.dateSolved), now));
+      const allGoals = appData.goalSettings.goals.filter(g => g.target > 0);
+      
+      const unmetGoalDetails = allGoals
+        .map(goal => {
+          const categoryInfo = GOAL_CATEGORIES.find(c => c.id === goal.categoryId);
+          if (!categoryInfo) return null;
+
+          const solvedInCategory = solvedToday.filter(p => categoryInfo.problemTypes.includes(p.type)).length;
+          const remaining = goal.target - solvedInCategory;
+          
+          if (remaining > 0) {
+            return {
+              category: categoryInfo.label,
+              target: goal.target,
+              solved: solvedInCategory,
+              remaining: remaining,
+            };
+          }
+          return null;
+        })
+        .filter((g): g is NonNullable<typeof g> => g !== null);
+
+
+      // 5. If there are unmet goals, send the data to the API endpoints.
+      if (unmetGoalDetails.length > 0) {
+        // Set the flag now to prevent multiple requests if the user reloads.
+        localStorage.setItem('userApiDataSent', JSON.stringify(now));
+        
+        try {
+          const payload = {
+            email: currentUser.email,
+            unmetGoals: unmetGoalDetails,
+          };
+          const fetchOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          };
+
+          // Send to both endpoints and log success/failure.
+          const res1 = await fetch('/api/user-data', fetchOptions);
+          const res2 = await fetch('/api/trigger-fetch', fetchOptions);
+
+          if (res1.ok && res2.ok) {
+            console.log('AlgoGrind Reminder: Successfully sent unmet goal data to both API endpoints.');
+          } else {
+             console.error('AlgoGrind Reminder: Failed to send data to one or more endpoints.', { res1, res2 });
+          }
+
+        } catch (error) {
+          console.error('AlgoGrind Reminder: Error calling API endpoints:', error);
+          // If the API call fails, remove the flag so it can be retried.
+          localStorage.removeItem('userApiDataSent');
+        }
+      }
+    };
+
+    sendReminderIfNeeded();
+    
+  }, [appData, isInitialized, isLoading, currentUser]);
 
   const tabsConfig = [
     { value: "dashboard", label: "Dashboard", icon: Icons.Dashboard },
