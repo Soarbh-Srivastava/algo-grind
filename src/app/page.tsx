@@ -17,17 +17,15 @@ import { Icons } from '@/components/icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 import { isSameDay, parseISO } from 'date-fns';
 import { GOAL_CATEGORIES } from '@/lib/constants';
 
 export default function HomePage() {
   const { currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
   const {
     appData,
-    isInitialized: dataInitialized,
+    isInitialized,
     isLoading: dataLoading,
     addSolvedProblem,
     updateSolvedProblem,
@@ -45,14 +43,16 @@ export default function HomePage() {
     }
   }, [currentUser, authLoading, router]);
 
-  const isLoading = authLoading || dataLoading || !dataInitialized;
+  const isLoading = authLoading || dataLoading || !isInitialized;
 
+  // This effect will handle the API call for unmet goals.
   React.useEffect(() => {
-    if (isLoading || !dataInitialized || !appData || !currentUser) {
+    if (isLoading || !isInitialized || !appData || !currentUser || !currentUser.email) {
       return;
     }
 
-    const checkGoalsAndNotify = () => {
+    const checkGoalsAndSendData = async () => {
+      // Only run for daily goals
       if (appData.goalSettings.period !== 'daily') {
         return;
       }
@@ -61,41 +61,69 @@ export default function HomePage() {
       const reminderTimeStr = appData.goalSettings.reminderTime || '18:00';
       const [reminderHours, reminderMinutes] = reminderTimeStr.split(':').map(Number);
       
+      // Don't run if it's before the user's specified reminder time
       if (now.getHours() < reminderHours || (now.getHours() === reminderHours && now.getMinutes() < reminderMinutes)) {
+        return;
+      }
+
+      const lastApiCallSentStr = localStorage.getItem('userApiDataSent');
+      // Don't run if data has already been sent today
+      if (lastApiCallSentStr && isSameDay(new Date(JSON.parse(lastApiCallSentStr)), now)) {
         return;
       }
 
       const solvedToday = appData.solvedProblems.filter(p => isSameDay(parseISO(p.dateSolved), now));
       const allGoals = appData.goalSettings.goals.filter(g => g.target > 0);
-      const unmetGoals = allGoals
+      
+      const unmetGoalDetails = allGoals
         .map(goal => {
           const categoryInfo = GOAL_CATEGORIES.find(c => c.id === goal.categoryId);
           if (!categoryInfo) return null;
 
           const solvedInCategory = solvedToday.filter(p => categoryInfo.problemTypes.includes(p.type)).length;
-          return solvedInCategory < goal.target ? categoryInfo : null;
+          const remaining = goal.target - solvedInCategory;
+          
+          if (remaining > 0) {
+              return {
+                  category: categoryInfo.label,
+                  target: goal.target,
+                  solved: solvedInCategory,
+                  remaining: remaining,
+              };
+          }
+          return null;
         })
         .filter(g => g !== null);
 
-      const unmetGoalLabels = unmetGoals.map(g => g!.label);
-      
-      const lastToastShownStr = localStorage.getItem('algoGrindReminderLastShown');
-      if (!lastToastShownStr || !isSameDay(new Date(JSON.parse(lastToastShownStr)), now)) {
-        if (unmetGoalLabels.length > 0) {
-            const unmetGoalsString = unmetGoalLabels.slice(0, 2).join(', ') + (unmetGoalLabels.length > 2 ? ' and more' : '');
-            toast({
-                title: "Daily Goal Reminder",
-                description: `Keep up the grind! You still have goals for: ${unmetGoalsString}.`,
-                duration: 8000,
-            });
-            localStorage.setItem('algoGrindReminderLastShown', JSON.stringify(now));
+      if (unmetGoalDetails.length > 0) {
+        try {
+          const response = await fetch('/api/user-data', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: currentUser.email,
+              unmetGoals: unmetGoalDetails,
+            }),
+          });
+
+          if (response.ok) {
+            console.log('Successfully sent unmet goal data to API.');
+            localStorage.setItem('userApiDataSent', JSON.stringify(now));
+          } else {
+            const errorData = await response.json();
+            console.error('Failed to send unmet goal data to API:', errorData.message);
+          }
+        } catch (error) {
+          console.error('Error calling /api/user-data:', error);
         }
       }
     };
 
-    checkGoalsAndNotify();
+    checkGoalsAndSendData();
     
-  }, [appData, dataInitialized, isLoading, currentUser, toast]);
+  }, [appData, isInitialized, isLoading, currentUser]);
 
   const tabsConfig = [
     { value: "dashboard", label: "Dashboard", icon: Icons.Dashboard },
