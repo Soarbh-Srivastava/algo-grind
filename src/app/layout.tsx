@@ -8,6 +8,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 export const metadata: Metadata = {
   title: 'Algo Grind - Track Your DSA Consistency',
   description: 'Set goals, track solved problems, and get AI-powered recommendations for your DSA journey.',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -22,6 +23,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Belleza&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet" />
+        <meta name="theme-color" content="#388E3C" />
       </head>
       <body className="font-body antialiased min-h-screen flex flex-col">
         <ThemeProvider
