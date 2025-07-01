@@ -1,3 +1,4 @@
+
 # Algo Grind
 
 A comprehensive platform for algorithm practice and coding interview preparation.
@@ -10,6 +11,10 @@ A comprehensive platform for algorithm practice and coding interview preparation
 - **Progress Tracking**: Monitor your solving progress and performance metrics
 - **Solution Explanations**: Detailed explanations and multiple solution approaches
 - **Topic-wise Organization**: Problems categorized by data structures and algorithms
+
+## 🏛️ System Design
+
+For a visual representation of the project's architecture, please see the [System Design Document](./SYSTEM_DESIGN.md).
 
 ## 🛠️ Tech Stack
 
