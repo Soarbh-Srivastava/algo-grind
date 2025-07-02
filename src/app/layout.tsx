@@ -65,7 +65,7 @@ export default function RootLayout({
       url: 'https://whysoarbh.xyz/',
       sameAs: [
         'https://whysoarbh.xyz/',
-        'https://github.com/soarbhsrivastava'
+        'https://github.com/Soarbh-Srivastava'
       ]
     },
     keywords: metadata.keywords ? (Array.isArray(metadata.keywords) ? metadata.keywords.join(', ') : metadata.keywords) : undefined,
